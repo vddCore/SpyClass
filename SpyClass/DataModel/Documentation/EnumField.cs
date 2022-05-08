@@ -1,12 +1,16 @@
 namespace SpyClass.DataModel.Documentation
 {
-    public class EnumField
+    public sealed class EnumField
     {
+        public EnumDoc Owner { get; }
+        
         public string Name { get; }
         public string Value { get; }
 
-        public EnumField(string name, string value)
+        public EnumField(EnumDoc owner, string name, string value)
         {
+            Owner = owner;
+            
             Name = name;
             Value = value;
         }

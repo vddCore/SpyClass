@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
+using System.Text;
+using Mono.Cecil;
+using Mono.Cecil.Rocks;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -9,9 +11,10 @@ namespace SpyClass.DataModel.Documentation
     {
         private static Dictionary<string, TypeDoc> _cache = new();
         
-        protected Type DocumentedType { get; }
+        protected TypeDefinition DocumentedType { get; }
 
         public TypeKind Kind { get; }
+        public TypeModifier Modifier { get; private set; }
         public TypeDoc DeclaringType { get; private set; }
         
         public string Namespace { get; private set; }
@@ -21,7 +24,8 @@ namespace SpyClass.DataModel.Documentation
         public List<TypeDoc> NestedTypes { get; private set; }
         public virtual string DisplayName => FullName.Replace("+", ".");
 
-        protected TypeDoc(Type documentedType, TypeKind kind)
+        protected TypeDoc(ModuleDefinition module, TypeDefinition documentedType, TypeKind kind)
+            : base(module)
         {
             DocumentedType = documentedType;
             Kind = kind;
@@ -32,15 +36,13 @@ namespace SpyClass.DataModel.Documentation
         private void AnalyzeBasicTypeInformation()
         {
             Access = DetermineAccess(DocumentedType);
-
+            Modifier = DetermineModifiers(DocumentedType);
+            
             Namespace = DocumentedType.Namespace;
             Name = DocumentedType.Name;
             FullName = DocumentedType.FullName;
 
-            var nestedTypes = DocumentedType.GetNestedTypes(
-                BindingFlags.Public 
-                | BindingFlags.NonPublic
-            );
+            var nestedTypes = DocumentedType.NestedTypes;
 
             if (nestedTypes.Any())
             {
@@ -48,7 +50,7 @@ namespace SpyClass.DataModel.Documentation
 
                 foreach (var type in nestedTypes)
                 {
-                    var typeDoc = FromType(type);
+                    var typeDoc = FromType(Module, type);
                     typeDoc.DeclaringType = this;
 
                     NestedTypes.Add(typeDoc);
@@ -56,7 +58,7 @@ namespace SpyClass.DataModel.Documentation
             }
         }
 
-        public static TypeDoc FromType(Type type)
+        public static TypeDoc FromType(ModuleDefinition module, TypeDefinition type)
         {
             if (_cache.ContainsKey(type.FullName!))
                 return _cache[type.FullName];
@@ -67,11 +69,11 @@ namespace SpyClass.DataModel.Documentation
             switch (typeKind)
             {
                 case TypeKind.Enum:
-                    ret = new EnumDoc(type);
+                    ret = new EnumDoc(module, type);
                     break;
 
                 case TypeKind.Class:
-                    ret = new ClassDoc(type);
+                    ret = new ClassDoc(module, type);
                     break;
                 
                 case TypeKind.Struct:
@@ -86,7 +88,7 @@ namespace SpyClass.DataModel.Documentation
             return ret;
         }
 
-        public static AccessModifier DetermineAccess(Type type)
+        public static AccessModifier DetermineAccess(TypeDefinition type)
         {
             if (type.IsNested)
             {
@@ -102,7 +104,7 @@ namespace SpyClass.DataModel.Documentation
                 {
                     return AccessModifier.Internal;
                 }
-                else if (type.IsNestedFamORAssem)
+                else if (type.IsNestedFamilyOrAssembly)
                 {
                     return AccessModifier.ProtectedInternal;
                 }
@@ -110,7 +112,7 @@ namespace SpyClass.DataModel.Documentation
                 {
                     return AccessModifier.Private;
                 }
-                else if (type.IsNestedFamANDAssem)
+                else if (type.IsNestedFamilyAndAssembly)
                 {
                     return AccessModifier.PrivateProtected;
                 }
@@ -121,7 +123,7 @@ namespace SpyClass.DataModel.Documentation
                 {
                     return AccessModifier.Public;
                 }
-                else if (!type.IsVisible)
+                else
                 {
                     return AccessModifier.Internal;
                 }
@@ -130,7 +132,7 @@ namespace SpyClass.DataModel.Documentation
             throw new NotSupportedException($"Cannot determine type access: {type.FullName}");
         }
 
-        public static TypeKind DetermineKind(Type type)
+        public static TypeKind DetermineKind(TypeDefinition type)
         {
             if (type.IsInterface)
             {
@@ -146,7 +148,7 @@ namespace SpyClass.DataModel.Documentation
             }
             else if (type.IsClass)
             {
-                if (type.BaseType == typeof(MulticastDelegate))
+                if (type.BaseType.FullName == typeof(MulticastDelegate).FullName)
                 {
                     return TypeKind.Delegate;
                 }
@@ -184,6 +186,98 @@ namespace SpyClass.DataModel.Documentation
                 .Replace("System.Object", "object");
 
             return ret;
+        }
+        
+        public static TypeModifier DetermineModifiers(TypeDefinition type)
+        {
+            var modifier = TypeModifier.Empty;
+
+            if (type.IsSealed && type.IsAbstract)
+            {
+                modifier = TypeModifier.Static;
+            }
+            else if (type.IsSealed
+                     && type.BaseType.FullName != typeof(MulticastDelegate).FullName
+                     && type.BaseType.FullName != typeof(ValueType).FullName
+                     && type.BaseType.FullName != typeof(Enum).FullName)
+            {
+                modifier = TypeModifier.Sealed;
+            }
+            else if (type.IsAbstract && !type.IsInterface)
+            {
+                modifier = TypeModifier.Abstract;
+            }
+            else if (type.IsByReference
+                     && type.BaseType.FullName == typeof(ValueType).FullName)
+            {
+                modifier = TypeModifier.Ref;
+            }
+
+            return modifier;
+        }
+
+        protected override string BuildStringRepresentation(int indent)
+        {
+            var sb = new StringBuilder();
+            var indentation = "".PadLeft(indent, ' ');
+
+            sb.Append(indentation + AccessModifierString);
+
+            switch (Modifier)
+            {
+                case TypeModifier.Abstract:
+                    sb.Append(" abstract");
+                    break;
+                
+                case TypeModifier.Sealed:
+                    sb.Append(" sealed");
+                    break;
+                
+                case TypeModifier.Static:
+                    sb.Append(" static");
+                    break;
+                
+                case TypeModifier.Ref:
+                    sb.Append(" ref");
+                    break;
+            }
+
+            switch (Kind)
+            {
+                case TypeKind.Enum:
+                    sb.Append(" enum");
+                    break;
+                
+                case TypeKind.Class:
+                    sb.Append(" class");
+                    break;
+                
+                case TypeKind.Struct:
+                    sb.Append(" struct");
+                    break;
+                
+                case TypeKind.Record:
+                    sb.Append(" record");
+                    break;
+                
+                case TypeKind.Delegate:
+                    sb.Append(" delegate");
+                    break;
+                
+                case TypeKind.Interface:
+                    sb.Append(" interface");
+                    break;
+            }
+
+            sb.Append(" ");
+            sb.Append(DisplayName);
+
+            return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return BuildStringRepresentation(0);
         }
     }
 }

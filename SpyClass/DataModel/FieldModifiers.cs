@@ -8,7 +8,6 @@ namespace SpyClass.DataModel
         Const = 1 << 0,
         ReadOnly = 1 << 1,
         Static = 1 << 2,
-        Ref = 1 << 3,
-        Volatile = 1 << 4
+        Volatile = 1 << 3
     }
 }

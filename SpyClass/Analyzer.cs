@@ -1,22 +1,39 @@
+using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Reflection;
-using SpyClass.DataModel;
+using System.Runtime.CompilerServices;
+using Mono.Cecil;
 using SpyClass.DataModel.Documentation;
+using SpyClass.Extensions;
 
 namespace SpyClass
 {
     public static class Analyzer
     {
-        public static List<TypeDoc> Analyze(Assembly assembly)
+        public static List<TypeDoc> Analyze(string fileName, AnalysisOptions options = null)
         {
+            options ??= new AnalysisOptions();
+            
             var ret = new List<TypeDoc>();
 
-            var types = assembly.GetTypes();
+            var assembly = AssemblyDefinition.ReadAssembly(fileName);
+            var module = assembly.MainModule;
+
+            var types = module.Types;
             
             foreach (var type in types)
             {
-                ret.Add(TypeDoc.FromType(type));
+                if (type.FullName == "<Module>")
+                {
+                    continue;
+                }
+                
+                var compilerGeneratedAttribute = type.GetCustomAttribute(typeof(CompilerGeneratedAttribute).FullName);
+                
+                if (compilerGeneratedAttribute != null && options.IgnoreCompilerGeneratedTypes)
+                    continue;
+
+                Console.WriteLine($"Type: {type.FullName}");
+                ret.Add(TypeDoc.FromType(module, type));
             }
             
             return ret;

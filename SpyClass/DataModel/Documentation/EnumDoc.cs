@@ -1,6 +1,8 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
+using Mono.Cecil;
+using Mono.Cecil.Rocks;
+using SpyClass.Extensions;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -13,8 +15,8 @@ namespace SpyClass.DataModel.Documentation
         public string UnderlyingTypeFullName { get; private set; }
         public string UnderlyingTypeAlias { get; private set; }
 
-        internal EnumDoc(Type documentedType)
-            : base(documentedType, TypeKind.Enum)
+        internal EnumDoc(ModuleDefinition module, TypeDefinition documentedType)
+            : base(module, documentedType, TypeKind.Enum)
         {
             AnalyzeBaseType();
             AnalyzeFields();
@@ -22,7 +24,7 @@ namespace SpyClass.DataModel.Documentation
 
         private void AnalyzeBaseType()
         {
-            var underlyingType = Enum.GetUnderlyingType(DocumentedType);
+            var underlyingType = DocumentedType.GetEnumUnderlyingType();
 
             UnderlyingTypeFullName = underlyingType.FullName;
             UnderlyingTypeAlias = TryAliasTypeName(UnderlyingTypeFullName);
@@ -32,35 +34,27 @@ namespace SpyClass.DataModel.Documentation
         {
             var names = DocumentedType.GetEnumNames();
             var values = DocumentedType.GetEnumValues();
-            var underlyingType = DocumentedType.GetEnumUnderlyingType();
             
-            for (var i = 0; i < names.Length; i++)
+            for (var i = 0; i < names.Count; i++)
             {
                 var name = names[i];
+                var value = values[i];
                 
-                // todo attributes
-                var member = DocumentedType.GetMember(name)[0];
+                // todo field attributes
                 
-                _fields.Add(new(
-                    name,
-                    Convert.ChangeType(
-                        values.GetValue(i)!,
-                        underlyingType
-                    )!.ToString()
-                ));
+                _fields.Add(
+                    new(this, name, value)
+                );
             }
         }
 
         protected override string BuildStringRepresentation(int indent)
         {
             var sb = new StringBuilder();
-
             var indentation = "".PadLeft(indent, ' ');
 
-            sb.Append(indentation + AccessModifierString);
-            sb.Append(" enum ");
-            sb.Append(DisplayName);
-
+            sb.Append(base.BuildStringRepresentation(indent));
+            
             if (UnderlyingTypeAlias != "int")
             {
                 sb.Append($" : {UnderlyingTypeAlias}");

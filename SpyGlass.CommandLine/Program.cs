@@ -1,23 +1,15 @@
-﻿using System;
-using SpyClass.DataModel;
+﻿using System.IO;
+using System.Reflection;
+using SpyClass;
 using SpyClass.DataModel.Documentation;
 
 namespace SpyGlass.CommandLine
 {
     static class Program
     {
-        private enum TestEnum : sbyte
-        {
-            A = -1,
-            B = 2,
-            X = -2,
-            Y = 1
-        }
-        
         static void Main(string[] args)
         {
-            var enumDoc = TypeDoc.FromType(typeof(TestEnum));
-            Console.WriteLine(enumDoc);
+            var doc = Analyzer.Analyze("/codespace/code/chroma/Chroma/Chroma/bin/Release/net6.0/Chroma.dll");
         }
     }
 }
