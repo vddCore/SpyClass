@@ -32,7 +32,6 @@ namespace SpyClass
                 if (compilerGeneratedAttribute != null && options.IgnoreCompilerGeneratedTypes)
                     continue;
 
-                Console.WriteLine($"Type: {type.FullName}");
                 ret.Add(TypeDoc.FromType(module, type));
             }
             

@@ -21,8 +21,9 @@ namespace SpyClass.DataModel.Documentation
         public string Name { get; private set; }
         public string FullName { get; private set; }
 
+        public GenericParameterList GenericParameters { get; private set; }
         public List<TypeDoc> NestedTypes { get; private set; }
-        public virtual string DisplayName => FullName.Replace("+", ".");
+        public virtual string DisplayName => FullName.Replace("+", ".").Split("`")[0];
 
         protected TypeDoc(ModuleDefinition module, TypeDefinition documentedType, TypeKind kind)
             : base(module)
@@ -42,19 +43,26 @@ namespace SpyClass.DataModel.Documentation
             Name = DocumentedType.Name;
             FullName = DocumentedType.FullName;
 
-            var nestedTypes = DocumentedType.NestedTypes;
-
-            if (nestedTypes.Any())
+            if (DocumentedType.NestedTypes.Any())
             {
                 NestedTypes = new List<TypeDoc>();
 
-                foreach (var type in nestedTypes)
+                foreach (var type in DocumentedType.NestedTypes)
                 {
                     var typeDoc = FromType(Module, type);
                     typeDoc.DeclaringType = this;
 
                     NestedTypes.Add(typeDoc);
                 }
+            }
+
+            if (DocumentedType.GenericParameters.Any())
+            {
+                GenericParameters = new GenericParameterList(
+                    Module, 
+                    this, 
+                    DocumentedType.GenericParameters
+                );
             }
         }
 
@@ -183,6 +191,7 @@ namespace SpyClass.DataModel.Documentation
                 .Replace("System.Single", "float")
                 .Replace("System.Double", "double")
                 .Replace("System.Decimal", "decimal")
+                .Replace("System.String", "string")
                 .Replace("System.Object", "object");
 
             return ret;
@@ -271,6 +280,12 @@ namespace SpyClass.DataModel.Documentation
 
             sb.Append(" ");
             sb.Append(DisplayName);
+
+            if (GenericParameters != null)
+            {
+                sb.Append(GenericParameters.BuildGenericParameterListString());
+                sb.Append(GenericParameters.BuildGenericParameterConstraintString());
+            }
 
             return sb.ToString();
         }

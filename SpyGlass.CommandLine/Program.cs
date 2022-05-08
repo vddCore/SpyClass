@@ -1,7 +1,5 @@
-﻿using System.IO;
-using System.Reflection;
+﻿using System;
 using SpyClass;
-using SpyClass.DataModel.Documentation;
 
 namespace SpyGlass.CommandLine
 {
@@ -9,7 +7,15 @@ namespace SpyGlass.CommandLine
     {
         static void Main(string[] args)
         {
-            var doc = Analyzer.Analyze("/codespace/code/chroma/Chroma/Chroma/bin/Release/net6.0/Chroma.dll");
+            var docs = Analyzer.Analyze("SpyGlass.CommandLine.dll");
+
+            foreach (var doc in docs)
+            {
+                if (!doc.Namespace.StartsWith("SpyGlass.CommandLine.TestNamespace"))
+                    continue;
+
+                Console.WriteLine(doc.ToString());
+            }
         }
     }
 }
