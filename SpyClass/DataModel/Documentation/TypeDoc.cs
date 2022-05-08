@@ -22,6 +22,7 @@ namespace SpyClass.DataModel.Documentation
         public string FullName { get; private set; }
 
         public GenericParameterList GenericParameters { get; private set; }
+        
         public List<TypeDoc> NestedTypes { get; private set; }
         public virtual string DisplayName => FullName.Replace("+", ".").Split("`")[0];
 
@@ -192,6 +193,8 @@ namespace SpyClass.DataModel.Documentation
                 .Replace("System.Double", "double")
                 .Replace("System.Decimal", "decimal")
                 .Replace("System.String", "string")
+                .Replace("System.IntPtr", "nint")
+                .Replace("System.UIntPtr", "nuint")
                 .Replace("System.Object", "object");
 
             return ret;

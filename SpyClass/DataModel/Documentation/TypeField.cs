@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Text.RegularExpressions;
 using Mono.Cecil;
 
 namespace SpyClass.DataModel.Documentation
@@ -11,7 +12,21 @@ namespace SpyClass.DataModel.Documentation
         public FieldModifiers Modifiers { get; private set; }
 
         public string TypeFullName { get; }
-        public TypeDoc Type => TypeDoc.FromType(Module, Module.GetType(TypeFullName).Resolve());
+
+        public TypeDoc Type
+        {
+            get
+            {
+                try
+                {
+                    return TypeDoc.FromType(Module, Module.GetType(TypeFullName).Resolve());
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+        }
         
         public string Name { get; }
 
@@ -20,7 +35,10 @@ namespace SpyClass.DataModel.Documentation
         {
             Owner = owner;
             Access = DetermineAccess(field);
-            TypeFullName = field.FieldType.FullName;
+            
+            TypeFullName = Regex.Replace(field.FieldType.FullName, @"`\d+", "");
+            TypeFullName = TypeFullName.Replace(",", ", ");
+            
             Name = field.Name;
             Modifiers = DetermineModifiers(field);
         }
