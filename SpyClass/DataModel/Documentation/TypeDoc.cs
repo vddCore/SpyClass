@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
+using SpyClass.DataModel.Documentation.Base;
+using SpyClass.DataModel.Documentation.Components;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -85,9 +87,12 @@ namespace SpyClass.DataModel.Documentation
                     ret = new ClassDoc(module, type);
                     break;
                 
+                case TypeKind.Delegate:
+                    ret = new DelegateDoc(module, type);
+                    break;
+                
                 case TypeKind.Struct:
                 case TypeKind.Record:
-                case TypeKind.Delegate:
                 case TypeKind.Interface:
                 default:
                     throw new NotSupportedException($"Unsupported type kind {typeKind}.");
@@ -228,13 +233,12 @@ namespace SpyClass.DataModel.Documentation
             return modifier;
         }
 
-        protected override string BuildStringRepresentation(int indent)
+        protected string BuildBasicIdentityString()
         {
             var sb = new StringBuilder();
-            var indentation = "".PadLeft(indent, ' ');
 
-            sb.Append(indentation + AccessModifierString);
-
+            sb.Append(AccessModifierString);
+            
             switch (Modifier)
             {
                 case TypeModifier.Abstract:
@@ -280,6 +284,17 @@ namespace SpyClass.DataModel.Documentation
                     sb.Append(" interface");
                     break;
             }
+
+            return sb.ToString();
+        }
+
+        protected override string BuildStringRepresentation(int indent)
+        {
+            var sb = new StringBuilder();
+            var indentation = "".PadLeft(indent, ' ');
+
+            sb.Append(indentation);
+            sb.Append(BuildBasicIdentityString());
 
             sb.Append(" ");
             sb.Append(DisplayName);

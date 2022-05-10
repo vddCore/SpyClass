@@ -2,16 +2,18 @@ using System;
 using System.Text;
 using System.Text.RegularExpressions;
 using Mono.Cecil;
+using SpyClass.DataModel.Documentation.Base;
 
 namespace SpyClass.DataModel.Documentation
 {
-    public sealed class TypeField : DocPart
+    public sealed class FieldDoc : DocPart
     {
         public TypeDoc Owner { get; }
-        
+
         public FieldModifiers Modifiers { get; private set; }
 
         public string TypeFullName { get; }
+        public string TypeDisplayName { get; }
 
         public TypeDoc Type
         {
@@ -27,18 +29,20 @@ namespace SpyClass.DataModel.Documentation
                 }
             }
         }
-        
+
         public string Name { get; }
 
-        public TypeField(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
+        public FieldDoc(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
             : base(module)
         {
             Owner = owner;
             Access = DetermineAccess(field);
-            
-            TypeFullName = Regex.Replace(field.FieldType.FullName, @"`\d+", "");
-            TypeFullName = TypeFullName.Replace(",", ", ");
-            
+
+            TypeFullName = field.FieldType.FullName;
+
+            TypeDisplayName = Regex.Replace(TypeFullName, @"`\d+", "")
+                .Replace(",", ", ");
+
             Name = field.Name;
             Modifiers = DetermineModifiers(field);
         }
@@ -66,7 +70,7 @@ namespace SpyClass.DataModel.Documentation
             {
                 ret |= FieldModifiers.Static;
             }
-            
+
             return ret;
         }
 
@@ -96,7 +100,7 @@ namespace SpyClass.DataModel.Documentation
             {
                 return AccessModifier.PrivateProtected;
             }
-            
+
             throw new NotSupportedException($"Cannot determine type access: {field.Name}");
         }
 
@@ -122,7 +126,7 @@ namespace SpyClass.DataModel.Documentation
                 {
                     sb.Append(" readonly");
                 }
-                
+
                 if (Modifiers.HasFlag(FieldModifiers.Volatile))
                 {
                     sb.Append(" volatile");
@@ -130,7 +134,7 @@ namespace SpyClass.DataModel.Documentation
             }
 
             sb.Append(" ");
-            sb.Append(TypeDoc.TryAliasTypeName(TypeFullName));
+            sb.Append(TypeDoc.TryAliasTypeName(TypeDisplayName));
             sb.Append(" ");
             sb.Append(Name);
 

@@ -1,12 +1,10 @@
 using System.IO;
 using Mono.Cecil;
 
-namespace SpyClass.DataModel.Documentation
+namespace SpyClass.DataModel.Documentation.Base
 {
-    public abstract class DocPart
-    {
-        protected ModuleDefinition Module { get; }
-        
+    public abstract class DocPart : DocComponent
+    {        
         public AccessModifier Access { get; protected set; }
 
         public string AccessModifierString => Access switch
@@ -19,10 +17,10 @@ namespace SpyClass.DataModel.Documentation
             AccessModifier.PrivateProtected => "private protected",
             _ => throw new InvalidDataException($"Unexpected access modifier {Access}")
         };
-
-        public DocPart(ModuleDefinition module)
+        
+        protected DocPart(ModuleDefinition module) 
+            : base(module)
         {
-            Module = module;
         }
 
         protected virtual string BuildStringRepresentation(int indent)

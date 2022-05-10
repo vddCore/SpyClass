@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Mono.Cecil;
+using Mono.Collections.Generic;
+using SpyClass.DataModel.Documentation.Base;
 
-namespace SpyClass.DataModel.Documentation
+namespace SpyClass.DataModel.Documentation.Components
 {
-    public class GenericParameterList
+    public class GenericParameterList : DocComponent
     {
         public TypeDoc Owner { get; }
         public List<GenericParameter> Parameters { get; } = new();
@@ -14,19 +16,18 @@ namespace SpyClass.DataModel.Documentation
         public GenericParameterList(
             ModuleDefinition module,
             TypeDoc owner,
-            Mono.Collections.Generic.Collection<Mono.Cecil.GenericParameter> cecilParameters)
+            Collection<Mono.Cecil.GenericParameter> cecilParameters)
+            : base(module)
         {
             Owner = owner;
-            AnalyzeParameters(module, cecilParameters);
+            AnalyzeParameters(cecilParameters);
         }
 
-        private void AnalyzeParameters(
-            ModuleDefinition module,
-            Mono.Collections.Generic.Collection<Mono.Cecil.GenericParameter> cecilParameters)
+        private void AnalyzeParameters(Collection<Mono.Cecil.GenericParameter> cecilParameters)
         {
             foreach (var parameter in cecilParameters)
             {
-                Parameters.Add(new GenericParameter(module, Owner, parameter));
+                Parameters.Add(new GenericParameter(Module, Owner, parameter));
             }
         }
 

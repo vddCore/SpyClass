@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using Mono.Cecil;
+using SpyClass.DataModel.Documentation.Base;
 
-namespace SpyClass.DataModel.Documentation
+namespace SpyClass.DataModel.Documentation.Components
 {
-    public class GenericParameter
+    public class GenericParameter : DocComponent
     {
         public TypeDoc Owner { get; }
         
@@ -16,13 +17,14 @@ namespace SpyClass.DataModel.Documentation
         public List<TypeDoc> Constraints { get; private set; }
 
         public GenericParameter(ModuleDefinition module, TypeDoc owner, Mono.Cecil.GenericParameter parameter)
+            : base(module)
         {
             Owner = owner;
 
-            AnalyzeGenericParameter(module, parameter);
+            AnalyzeGenericParameter(parameter);
         }
 
-        private void AnalyzeGenericParameter(ModuleDefinition module, Mono.Cecil.GenericParameter parameter)
+        private void AnalyzeGenericParameter(Mono.Cecil.GenericParameter parameter)
         {
             Name = parameter.Name;
 
@@ -33,7 +35,7 @@ namespace SpyClass.DataModel.Documentation
                 foreach (var constraint in parameter.Constraints)
                 {
                     Constraints.Add(
-                        TypeDoc.FromType(module, constraint.ConstraintType.Resolve())
+                        TypeDoc.FromType(Module, constraint.ConstraintType.Resolve())
                     );
                 }
             }

@@ -1,6 +1,4 @@
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using Mono.Cecil;
 
@@ -8,14 +6,14 @@ namespace SpyClass.DataModel.Documentation
 {
     public sealed class ClassDoc : TypeDoc
     {
-        private List<TypeField> _fields = new();
+        private List<FieldDoc> _fields = new();
 
-        public IReadOnlyList<TypeField> Fields => _fields;
+        public IReadOnlyList<FieldDoc> Fields => _fields;
 
         public ClassDoc(ModuleDefinition module, TypeDefinition documentedType) 
             : base(module, documentedType, TypeKind.Class)
         {
-            AnalyzeFields();            
+            AnalyzeFields();
         }
 
         private void AnalyzeFields()
@@ -24,7 +22,7 @@ namespace SpyClass.DataModel.Documentation
 
             foreach (var info in fields)
             {
-                _fields.Add(new TypeField(Module, info, this));
+                _fields.Add(new FieldDoc(Module, info, this));
             }
         }
 

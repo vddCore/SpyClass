@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
+using SpyClass.DataModel.Documentation.Components;
 using SpyClass.Extensions;
 
 namespace SpyClass.DataModel.Documentation
@@ -43,7 +44,7 @@ namespace SpyClass.DataModel.Documentation
                 // todo field attributes
                 
                 _fields.Add(
-                    new(this, name, value)
+                    new(Module, this, name, value)
                 );
             }
         }
