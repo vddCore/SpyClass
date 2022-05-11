@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
+using SpyClass.DataModel.Documentation.Components;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -10,9 +11,7 @@ namespace SpyClass.DataModel.Documentation
         public TypeDoc Owner { get; }
      
         public string Name { get; private set; }
-        
-        public string TypeFullName { get; private set; }
-        public string TypeDisplayName { get; private set; }
+        public TypeInfo EventTypeInfo { get; private set; }
 
         public EventModifiers Modifiers { get; private set; }
 
@@ -27,10 +26,9 @@ namespace SpyClass.DataModel.Documentation
         private void AnalyzeEvent(EventDefinition ev)
         {
             Name = ev.Name;
-            
-            TypeFullName = ev.EventType.FullName;
-            TypeDisplayName = NameTools.MakeDocFriendlyName(TypeFullName, false);
 
+            EventTypeInfo = new TypeInfo(Module, ev.EventType);
+            
             Access = DetermineAccess(ev);
             Modifiers = DetermineModifiers(ev);
         }
@@ -96,7 +94,7 @@ namespace SpyClass.DataModel.Documentation
             sb.Append(AccessModifierString);
             sb.Append(BuildEventModifierString());
             sb.Append(" event ");
-            sb.Append(TypeDisplayName);
+            sb.Append(EventTypeInfo.BuildStringRepresentation());
             sb.Append(" ");
             sb.Append(Name);
 

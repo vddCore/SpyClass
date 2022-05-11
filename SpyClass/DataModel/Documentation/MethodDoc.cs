@@ -14,8 +14,7 @@ namespace SpyClass.DataModel.Documentation
         public MethodModifiers Modifiers { get; }
 
         public string Name { get; private set; }
-        public string ReturnTypeFullName { get; private set; }
-        public string ReturnTypeDisplayName { get; private set; }
+        public TypeInfo ReturnTypeInfo { get; private set; }
 
         public GenericParameterList GenericParameters { get; private set; }
         public MethodParameterList MethodParameters { get; private set; }
@@ -36,8 +35,7 @@ namespace SpyClass.DataModel.Documentation
         private void AnalyzeMethod(MethodDefinition method)
         {
             Name = method.Name;
-            ReturnTypeFullName = method.ReturnType.FullName;
-            ReturnTypeDisplayName = NameTools.MakeDocFriendlyName(ReturnTypeFullName, false);
+            ReturnTypeInfo = new TypeInfo(Module, method.ReturnType);
 
             GenericParameters = new GenericParameterList(Module, method.GenericParameters);
             MethodParameters = new MethodParameterList(Module, method.Parameters);
@@ -137,7 +135,7 @@ namespace SpyClass.DataModel.Documentation
             sb.Append(AccessModifierString);
             sb.Append(BuildMethodModifierString());
             sb.Append(" ");
-            sb.Append(ReturnTypeDisplayName);
+            sb.Append(ReturnTypeInfo.BuildStringRepresentation());
             sb.Append(" ");
             sb.Append(Name);
 

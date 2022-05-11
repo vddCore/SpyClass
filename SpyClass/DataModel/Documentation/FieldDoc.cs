@@ -2,6 +2,7 @@ using System;
 using System.Text;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
+using SpyClass.DataModel.Documentation.Components;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -10,10 +11,8 @@ namespace SpyClass.DataModel.Documentation
         public TypeDoc Owner { get; }
 
         public FieldModifiers Modifiers { get; private set; }
+        public TypeInfo FieldTypeInfo { get; private set; }
 
-        public string TypeFullName { get; }
-        public string TypeDisplayName { get; }
-        
         public string Name { get; }
 
         public FieldDoc(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
@@ -22,8 +21,7 @@ namespace SpyClass.DataModel.Documentation
             Owner = owner;
             Access = DetermineAccess(field);
 
-            TypeFullName = field.FieldType.FullName;
-            TypeDisplayName = NameTools.MakeDocFriendlyName(TypeFullName, false);
+            FieldTypeInfo = new TypeInfo(Module, field.FieldType);
 
             Name = field.Name;
             Modifiers = DetermineModifiers(field);
@@ -116,7 +114,7 @@ namespace SpyClass.DataModel.Documentation
             }
 
             sb.Append(" ");
-            sb.Append(TypeDisplayName);
+            sb.Append(FieldTypeInfo.BuildStringRepresentation());
             sb.Append(" ");
             sb.Append(Name);
 

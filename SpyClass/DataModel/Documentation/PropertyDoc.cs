@@ -1,6 +1,7 @@
 using System.Text;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
+using SpyClass.DataModel.Documentation.Components;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -12,8 +13,7 @@ namespace SpyClass.DataModel.Documentation
         public AccessModifier? GetAccess { get; private set; }
         public AccessModifier? SetAccess { get; private set; }
 
-        public string PropertyTypeFullName { get; private set; }
-        public string PropertyTypeDisplayName { get; private set; }
+        public TypeInfo PropertyTypeInfo { get; private set; }
 
         public PropertyDoc(ModuleDefinition module, TypeDoc owner, PropertyDefinition property)
             : base(module)
@@ -43,9 +43,7 @@ namespace SpyClass.DataModel.Documentation
             }
 
             Name = property.Name;
-
-            PropertyTypeFullName = property.PropertyType.FullName;
-            PropertyTypeDisplayName = NameTools.MakeDocFriendlyName(PropertyTypeFullName, true);
+            PropertyTypeInfo = new TypeInfo(Module, property.PropertyType);
         }
 
         private void AnalyzeGetAccessLevel(PropertyDefinition property)
@@ -116,7 +114,7 @@ namespace SpyClass.DataModel.Documentation
 
             sb.Append(AccessModifierString);
             sb.Append(" ");
-            sb.Append(PropertyTypeDisplayName);
+            sb.Append(PropertyTypeInfo.BuildStringRepresentation());
             sb.Append(" ");
             sb.Append(Name);
 

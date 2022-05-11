@@ -34,8 +34,7 @@ namespace SpyClass.DataModel.Documentation
 
         public virtual string DisplayName { get; private set; }
 
-        public string BaseTypeFullName { get; private set; }
-        public string BaseTypeDisplayName { get; private set; }
+        public TypeInfo BaseTypeInfo { get; private set; }
 
         protected TypeDoc(ModuleDefinition module, TypeDefinition documentedType, TypeKind kind)
             : base(module)
@@ -58,8 +57,7 @@ namespace SpyClass.DataModel.Documentation
 
             if (DocumentedType.BaseType != null && !IsBuiltInBaseType(DocumentedType.BaseType.FullName))
             {
-                BaseTypeFullName = DocumentedType.BaseType.FullName;
-                BaseTypeDisplayName = NameTools.MakeDocFriendlyName(BaseTypeFullName, false);
+                BaseTypeInfo = new TypeInfo(Module, DocumentedType.BaseType);
             }
 
             if (DocumentedType.NestedTypes.Any())
@@ -384,10 +382,10 @@ namespace SpyClass.DataModel.Documentation
                 sb.Append(GenericParameters.BuildGenericParameterListString());
             }
 
-            if (!string.IsNullOrEmpty(BaseTypeDisplayName))
+            if (BaseTypeInfo != null)
             {
                 sb.Append(" : ");
-                sb.Append(BaseTypeDisplayName);
+                sb.Append(BaseTypeInfo.BuildStringRepresentation());
             }
 
             if (GenericParameters != null)

@@ -12,7 +12,7 @@ namespace SpyClass.DataModel.Documentation.Components
         public bool IsOut { get; private set; }
 
         public List<GenericParameterModifier> Modifiers { get; private set; } = new();
-        public List<string> Constraints { get; private set; }
+        public List<TypeInfo> Constraints { get; private set; }
 
         public GenericParameter(ModuleDefinition module, Mono.Cecil.GenericParameter parameter)
             : base(module)
@@ -26,13 +26,11 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.HasConstraints)
             {
-                Constraints = new List<string>();
+                Constraints = new List<TypeInfo>();
 
                 foreach (var constraint in parameter.Constraints)
                 {
-                    Constraints.Add(
-                        NameTools.MakeDocFriendlyName(constraint.ConstraintType.FullName, false)
-                    );
+                    Constraints.Add(new TypeInfo(Module, constraint.ConstraintType));
                 }
             }
             
@@ -73,7 +71,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.Attributes.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
             {
-                Constraints.Remove("System.ValueType");
+                Constraints.RemoveAll(x => x.FullName == "System.ValueType");
 
                 if (hasUnmanagedAttribute)
                 {

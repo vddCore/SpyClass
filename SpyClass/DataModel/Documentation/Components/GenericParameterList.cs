@@ -74,7 +74,7 @@ namespace SpyClass.DataModel.Documentation.Components
                 {
                     foreach (var constraint in param.Constraints)
                     {
-                        constraintList.Add(constraint);
+                        constraintList.Add(constraint.BuildStringRepresentation());
                     }
                 }
                 

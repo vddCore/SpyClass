@@ -12,6 +12,7 @@ namespace SpyClass.DataModel.Documentation.Components
         public string TypeFullName { get; private set; }
         public string TypeDisplayName { get; private set; }
 
+        public string DefaultValueString { get; private set; }
         public ParameterModifiers Modifiers { get; private set; }
 
         public MethodParameter(ModuleDefinition module, ParameterDefinition parameter)
@@ -39,6 +40,22 @@ namespace SpyClass.DataModel.Documentation.Components
             {
                 Modifiers |= ParameterModifiers.Params;
             }
+
+            if (parameter.HasConstant)
+            {
+                if (parameter.Constant == null)
+                {
+                    DefaultValueString = "null";
+                }
+                else if (parameter.Constant.GetType().FullName == typeof(string).FullName)
+                {
+                    DefaultValueString = "\"" + parameter.Constant + "\"";
+                }
+                else
+                {
+                    DefaultValueString = parameter.Constant.ToString();
+                }
+            }
         }
 
         public string BuildStringRepresentation()
@@ -62,6 +79,12 @@ namespace SpyClass.DataModel.Documentation.Components
             sb.Append(TypeDisplayName);
             sb.Append(" ");
             sb.Append(Name);
+
+            if (DefaultValueString != null)
+            {
+                sb.Append(" = ");
+                sb.Append(DefaultValueString);
+            }
 
             return sb.ToString();
         }
