@@ -13,8 +13,4 @@
       <ProjectReference Include="..\SpyClass\SpyClass.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="TestNamespace\Structs" />
-    </ItemGroup>
-
 </Project>

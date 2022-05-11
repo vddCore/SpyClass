@@ -10,16 +10,13 @@ namespace SpyClass.DataModel.Documentation.Components
 {
     public class GenericParameterList : DocComponent
     {
-        public TypeDoc Owner { get; }
+        public bool Any => Parameters.Count > 0;
+        
         public List<GenericParameter> Parameters { get; } = new();
 
-        public GenericParameterList(
-            ModuleDefinition module,
-            TypeDoc owner,
-            Collection<Mono.Cecil.GenericParameter> cecilParameters)
+        public GenericParameterList(ModuleDefinition module, Collection<Mono.Cecil.GenericParameter> cecilParameters)
             : base(module)
         {
-            Owner = owner;
             AnalyzeParameters(cecilParameters);
         }
 
@@ -27,7 +24,7 @@ namespace SpyClass.DataModel.Documentation.Components
         {
             foreach (var parameter in cecilParameters)
             {
-                Parameters.Add(new GenericParameter(Module, Owner, parameter));
+                Parameters.Add(new GenericParameter(Module, parameter));
             }
         }
 
@@ -35,29 +32,32 @@ namespace SpyClass.DataModel.Documentation.Components
         {
             var sb = new StringBuilder();
 
-            sb.Append("<");
-
-            for (var i = 0; i < Parameters.Count; i++)
+            if (Parameters.Any())
             {
-                var param = Parameters[i];
+                sb.Append("<");
 
-                if (param.IsIn)
+                for (var i = 0; i < Parameters.Count; i++)
                 {
-                    sb.Append("in ");
-                }
-                else if (param.IsOut)
-                {
-                    sb.Append("out ");
-                }
+                    var param = Parameters[i];
 
-                sb.Append(param.Name);
-                if (i < Parameters.Count - 1)
-                {
-                    sb.Append(", ");
+                    if (param.IsIn)
+                    {
+                        sb.Append("in ");
+                    }
+                    else if (param.IsOut)
+                    {
+                        sb.Append("out ");
+                    }
+
+                    sb.Append(param.Name);
+                    if (i < Parameters.Count - 1)
+                    {
+                        sb.Append(", ");
+                    }
                 }
+                sb.Append(">");
             }
-            sb.Append(">");
-
+            
             return sb.ToString();
         }
 
@@ -74,7 +74,7 @@ namespace SpyClass.DataModel.Documentation.Components
                 {
                     foreach (var constraint in param.Constraints)
                     {
-                        constraintList.Add(constraint.DisplayName);
+                        constraintList.Add(constraint);
                     }
                 }
                 

@@ -6,9 +6,7 @@ namespace SpyClass.DataModel.Documentation
 {
     public sealed class ClassDoc : TypeDoc
     {
-        private List<FieldDoc> _fields = new();
-
-        public IReadOnlyList<FieldDoc> Fields => _fields;
+        public List<FieldDoc> Fields { get; } = new();
 
         public ClassDoc(ModuleDefinition module, TypeDefinition documentedType) 
             : base(module, documentedType, TypeKind.Class)
@@ -18,28 +16,28 @@ namespace SpyClass.DataModel.Documentation
 
         private void AnalyzeFields()
         {
-            var fields = DocumentedType.Fields;
-
-            foreach (var info in fields)
+            foreach (var field in DocumentedType.Fields)
             {
-                _fields.Add(new FieldDoc(Module, info, this));
+                if (!field.IsPublic && !field.IsFamily && !Analyzer.Options.IncludeNonUserMembers)
+                    continue;
+
+                if (field.IsCompilerControlled && Analyzer.Options.IgnoreCompilerGeneratedTypes)
+                    continue;
+                
+                Fields.Add(new FieldDoc(Module, field, this));
             }
         }
 
-        protected override string BuildStringRepresentation(int indent)
+        protected override string BuildInnerContent(int indent)
         {
             var sb = new StringBuilder();
             var indentation = "".PadLeft(indent, ' ');
-            
-            sb.Append(base.BuildStringRepresentation(indent));
-            sb.AppendLine();
-            sb.AppendLine("{");
 
-            foreach (var field in _fields)
+            foreach (var field in Fields)
             {
                 sb.AppendLine(indentation + "    " + field);
             }
-            sb.AppendLine("}");
+            
             return sb.ToString();
         }
 

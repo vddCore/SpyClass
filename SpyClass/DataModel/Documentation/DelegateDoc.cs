@@ -8,7 +8,7 @@ namespace SpyClass.DataModel.Documentation
     public class DelegateDoc : TypeDoc
     {
         public string ReturnTypeFullName { get; private set; }
-        public string ReturnTypeDisplayName => TryAliasTypeName(ReturnTypeFullName);
+        public string ReturnTypeDisplayName { get; private set; }
         
         public MethodParameterList MethodParameters { get; private set; }
 
@@ -23,6 +23,7 @@ namespace SpyClass.DataModel.Documentation
             var invokeMethod = DocumentedType.Methods.First(x => x.Name == "Invoke");
 
             ReturnTypeFullName = invokeMethod.ReturnType.FullName;
+            ReturnTypeDisplayName = NameTools.MakeDocFriendlyName(ReturnTypeFullName, false);
             MethodParameters = new MethodParameterList(Module, invokeMethod.Parameters);
         }
 

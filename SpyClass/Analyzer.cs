@@ -9,9 +9,13 @@ namespace SpyClass
 {
     public static class Analyzer
     {
+        // todo thread-unsafe
+        public static AnalysisOptions Options { get; private set; }
+        
         public static List<TypeDoc> Analyze(string fileName, AnalysisOptions options = null)
         {
             options ??= new AnalysisOptions();
+            Options = options;
             
             var ret = new List<TypeDoc>();
 
@@ -30,6 +34,9 @@ namespace SpyClass
                 var compilerGeneratedAttribute = type.GetCustomAttribute(typeof(CompilerGeneratedAttribute).FullName);
                 
                 if (compilerGeneratedAttribute != null && options.IgnoreCompilerGeneratedTypes)
+                    continue;
+
+                if (!type.IsPublic && !options.IncludeNonPublicTypes)
                     continue;
 
                 ret.Add(TypeDoc.FromType(module, type));

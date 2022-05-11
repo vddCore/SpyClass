@@ -9,6 +9,8 @@ namespace SpyClass.DataModel.Documentation.Components
 {
     public class MethodParameterList : DocComponent
     {
+        public bool Any => Parameters.Count > 0;
+        
         public List<MethodParameter> Parameters { get; } = new();
 
         public MethodParameterList(ModuleDefinition module, Collection<ParameterDefinition> parameters)

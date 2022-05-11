@@ -6,21 +6,17 @@ namespace SpyClass.DataModel.Documentation.Components
 {
     public class GenericParameter : DocComponent
     {
-        public TypeDoc Owner { get; }
-        
         public string Name { get; private set; }
         
         public bool IsIn { get; private set; }
         public bool IsOut { get; private set; }
 
         public List<GenericParameterModifier> Modifiers { get; private set; } = new();
-        public List<TypeDoc> Constraints { get; private set; }
+        public List<string> Constraints { get; private set; }
 
-        public GenericParameter(ModuleDefinition module, TypeDoc owner, Mono.Cecil.GenericParameter parameter)
+        public GenericParameter(ModuleDefinition module, Mono.Cecil.GenericParameter parameter)
             : base(module)
         {
-            Owner = owner;
-
             AnalyzeGenericParameter(parameter);
         }
 
@@ -30,12 +26,12 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.HasConstraints)
             {
-                Constraints = new List<TypeDoc>();
+                Constraints = new List<string>();
 
                 foreach (var constraint in parameter.Constraints)
                 {
                     Constraints.Add(
-                        TypeDoc.FromType(Module, constraint.ConstraintType.Resolve())
+                        NameTools.MakeDocFriendlyName(constraint.ConstraintType.FullName, false)
                     );
                 }
             }
@@ -77,7 +73,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.Attributes.HasFlag(GenericParameterAttributes.NotNullableValueTypeConstraint))
             {
-                Constraints.RemoveAll(x => x.FullName == "System.ValueType");
+                Constraints.Remove("System.ValueType");
 
                 if (hasUnmanagedAttribute)
                 {

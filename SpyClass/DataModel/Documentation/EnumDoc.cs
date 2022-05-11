@@ -9,9 +9,7 @@ namespace SpyClass.DataModel.Documentation
 {
     public sealed class EnumDoc : TypeDoc
     {
-        private List<EnumField> _fields = new();
-
-        public IReadOnlyList<EnumField> Fields => _fields;
+        public List<EnumField> Fields { get; } = new();
 
         public string UnderlyingTypeFullName { get; private set; }
         public string UnderlyingTypeAlias { get; private set; }
@@ -28,7 +26,7 @@ namespace SpyClass.DataModel.Documentation
             var underlyingType = DocumentedType.GetEnumUnderlyingType();
 
             UnderlyingTypeFullName = underlyingType.FullName;
-            UnderlyingTypeAlias = TryAliasTypeName(UnderlyingTypeFullName);
+            UnderlyingTypeAlias = NameTools.MakeDocFriendlyName(UnderlyingTypeFullName, false);
         }
 
         private void AnalyzeFields()
@@ -43,7 +41,7 @@ namespace SpyClass.DataModel.Documentation
                 
                 // todo field attributes
                 
-                _fields.Add(
+                Fields.Add(
                     new(Module, this, name, value)
                 );
             }
@@ -54,21 +52,24 @@ namespace SpyClass.DataModel.Documentation
             var sb = new StringBuilder();
             var indentation = "".PadLeft(indent, ' ');
 
-            sb.Append(base.BuildStringRepresentation(indent));
+            sb.Append(indentation);
+            sb.Append(BuildBasicIdentityString());
+            sb.Append(BuildDisplayNameString());
             
             if (UnderlyingTypeAlias != "int")
             {
                 sb.Append($" : {UnderlyingTypeAlias}");
             }
+            
             sb.AppendLine();
             sb.AppendLine(indentation + "{");
 
-            for (var i = 0; i < _fields.Count; i++)
+            for (var i = 0; i < Fields.Count; i++)
             {
-                var fld = _fields[i];
+                var fld = Fields[i];
                 sb.Append(indentation + $"    {fld.Name} = {fld.Value}");
 
-                if (i + 1 < _fields.Count)
+                if (i + 1 < Fields.Count)
                     sb.Append(",");
 
                 sb.AppendLine();

@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using System.Text.RegularExpressions;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
 
@@ -14,22 +13,7 @@ namespace SpyClass.DataModel.Documentation
 
         public string TypeFullName { get; }
         public string TypeDisplayName { get; }
-
-        public TypeDoc Type
-        {
-            get
-            {
-                try
-                {
-                    return TypeDoc.FromType(Module, Module.GetType(TypeFullName).Resolve());
-                }
-                catch
-                {
-                    return null;
-                }
-            }
-        }
-
+        
         public string Name { get; }
 
         public FieldDoc(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
@@ -39,9 +23,7 @@ namespace SpyClass.DataModel.Documentation
             Access = DetermineAccess(field);
 
             TypeFullName = field.FieldType.FullName;
-
-            TypeDisplayName = Regex.Replace(TypeFullName, @"`\d+", "")
-                .Replace(",", ", ");
+            TypeDisplayName = NameTools.MakeDocFriendlyName(TypeFullName, false);
 
             Name = field.Name;
             Modifiers = DetermineModifiers(field);
@@ -134,7 +116,7 @@ namespace SpyClass.DataModel.Documentation
             }
 
             sb.Append(" ");
-            sb.Append(TypeDoc.TryAliasTypeName(TypeDisplayName));
+            sb.Append(TypeDisplayName);
             sb.Append(" ");
             sb.Append(Name);
 
