@@ -17,6 +17,8 @@ namespace SpyClass.DataModel.Documentation
 
         protected TypeDefinition DocumentedType { get; }
 
+        protected virtual HashSet<string> IgnoredValidMethodNames { get; set; } = new();
+
         public TypeKind Kind { get; }
         public TypeModifier Modifier { get; private set; }
         public TypeDoc DeclaringType { get; private set; }
@@ -24,17 +26,20 @@ namespace SpyClass.DataModel.Documentation
         public string Namespace { get; private set; }
         public string Name { get; private set; }
         public string FullName { get; private set; }
-
-        public GenericParameterList GenericParameters { get; private set; }
-
-        public List<TypeDoc> NestedTypes { get; private set; } = new();
-        public List<MethodDoc> Methods { get; private set; } = new();
-        public List<EventDoc> Events { get; private set; } = new();
-        public List<PropertyDoc> Properties { get; private set; } = new();
-
         public virtual string DisplayName { get; private set; }
 
+        public AttributeList Attributes { get; private set; }
+        public GenericParameterList GenericParameters { get; private set; }
+
         public TypeInfo BaseTypeInfo { get; private set; }
+        public List<TypeInfo> ImplementedInterfaces { get; private set; } = new();
+
+        public List<FieldDoc> Fields { get; } = new();
+        public List<PropertyDoc> Properties { get; private set; } = new();
+        public List<EventDoc> Events { get; private set; } = new();
+        public List<ConstructorDoc> Constructors { get; private set; } = new();
+        public List<MethodDoc> Methods { get; private set; } = new();
+        public List<TypeDoc> NestedTypes { get; private set; } = new();
 
         protected TypeDoc(ModuleDefinition module, TypeDefinition documentedType, TypeKind kind)
             : base(module)
@@ -43,6 +48,16 @@ namespace SpyClass.DataModel.Documentation
             Kind = kind;
 
             AnalyzeBasicTypeInformation();
+
+            if (Kind != TypeKind.Enum)
+            {
+                AnalyzeFields();
+            }
+
+            AnalyzeEvents();
+            AnalyzeProperties();
+            AnalyzeMethods();
+            AnalyzeNestedTypes();
         }
 
         private void AnalyzeBasicTypeInformation()
@@ -60,86 +75,113 @@ namespace SpyClass.DataModel.Documentation
                 BaseTypeInfo = new TypeInfo(Module, DocumentedType.BaseType);
             }
 
-            if (DocumentedType.NestedTypes.Any())
+            if (DocumentedType.HasInterfaces)
             {
-                NestedTypes = new List<TypeDoc>();
-
-                foreach (var type in DocumentedType.NestedTypes)
+                foreach (var iface in DocumentedType.Interfaces)
                 {
-                    var compilerGeneratedAttribute =
-                        type.GetCustomAttribute(typeof(CompilerGeneratedAttribute).FullName);
-
-                    if (compilerGeneratedAttribute != null && Analyzer.Options.IgnoreCompilerGeneratedTypes)
-                        continue;
-
-                    if (!type.IsPublic && !Analyzer.Options.IncludeNonPublicTypes)
-                        continue;
-
-                    var typeDoc = FromType(Module, type);
-                    typeDoc.DeclaringType = this;
-
-                    NestedTypes.Add(typeDoc);
+                    ImplementedInterfaces.Add(new TypeInfo(Module, iface.InterfaceType));
                 }
             }
 
-            if (DocumentedType.GenericParameters.Any())
+            if (DocumentedType.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(Module, DocumentedType.CustomAttributes);
+            }
+
+            if (DocumentedType.HasGenericParameters)
             {
                 GenericParameters = new GenericParameterList(
                     Module,
                     DocumentedType.GenericParameters
                 );
             }
+        }
 
-            if (DocumentedType.Methods.Any())
+        private void AnalyzeFields()
+        {
+            foreach (var field in DocumentedType.Fields)
             {
-                Methods = new List<MethodDoc>();
+                if (!field.IsPublic && !field.IsFamily && !Analyzer.Options.IncludeNonUserMembers)
+                    continue;
 
-                foreach (var method in DocumentedType.Methods)
+                if (field.IsCompilerControlled && Analyzer.Options.IgnoreCompilerGeneratedTypes)
+                    continue;
+
+                Fields.Add(new FieldDoc(Module, field, this));
+            }
+        }
+
+        private void AnalyzeEvents()
+        {
+            foreach (var ev in DocumentedType.Events)
+            {
+                Events.Add(new EventDoc(Module, this, ev));
+            }
+        }
+
+        private void AnalyzeProperties()
+        {
+            foreach (var prop in DocumentedType.Properties)
+            {
+                if (prop.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
+                    && Analyzer.Options.IgnoreCompilerGeneratedTypes)
+                    continue;
+                
+                var propDoc = new PropertyDoc(Module, this, prop);
+
+                if (propDoc.Access == AccessModifier.Public
+                    || propDoc.Access == AccessModifier.Protected
+                    || Analyzer.Options.IncludeNonUserMembers)
                 {
-                    if (!method.IsPublic && !method.IsFamily && !Analyzer.Options.IncludeNonUserMembers)
-                        continue;
-
-                    if ((method.IsGetter || method.IsSetter) && !Analyzer.Options.IncludeNonUserMembers)
-                        continue;
-
-                    if ((method.IsAddOn || method.IsRemoveOn) && !Analyzer.Options.IncludeNonUserMembers)
-                        continue;
-
-                    if (method.IsConstructor)
-                    {
-                    }
-                    else
-                    {
-                        Methods.Add(new MethodDoc(Module, this, method));
-                    }
+                    Properties.Add(propDoc);
                 }
             }
+        }
 
-            if (DocumentedType.Events.Any())
+        private void AnalyzeMethods()
+        {
+            foreach (var method in DocumentedType.Methods)
             {
-                Events = new List<EventDoc>();
+                if (IgnoredValidMethodNames.Contains(method.Name))
+                    continue;
 
-                foreach (var ev in DocumentedType.Events)
+                if (!method.IsPublic && !method.IsFamily && !Analyzer.Options.IncludeNonUserMembers)
+                    continue;
+
+                if ((method.IsGetter || method.IsSetter) && !Analyzer.Options.IncludeNonUserMembers)
+                    continue;
+
+                if ((method.IsAddOn || method.IsRemoveOn) && !Analyzer.Options.IncludeNonUserMembers)
+                    continue;
+
+                if (method.IsConstructor)
                 {
-                    Events.Add(new EventDoc(Module, this, ev));
+                    Constructors.Add(new ConstructorDoc(Module, this, method));
+                }
+                else
+                {
+                    Methods.Add(new MethodDoc(Module, this, method));
                 }
             }
+        }
 
-            if (DocumentedType.Properties.Any())
+        private void AnalyzeNestedTypes()
+        {
+            foreach (var type in DocumentedType.NestedTypes)
             {
-                Properties = new List<PropertyDoc>();
+                var compilerGeneratedAttribute =
+                    type.GetCustomAttribute(typeof(CompilerGeneratedAttribute).FullName);
 
-                foreach (var prop in DocumentedType.Properties)
-                {
-                    var propDoc = new PropertyDoc(Module, this, prop);
+                if (compilerGeneratedAttribute != null && Analyzer.Options.IgnoreCompilerGeneratedTypes)
+                    continue;
 
-                    if (propDoc.Access == AccessModifier.Public
-                        || propDoc.Access == AccessModifier.Protected
-                        || Analyzer.Options.IncludeNonUserMembers)
-                    {
-                        Properties.Add(propDoc);
-                    }
-                }
+                if (!type.IsNestedPublic && !type.IsNestedFamily && !Analyzer.Options.IncludeNonPublicTypes)
+                    continue;
+
+                var typeDoc = FromType(Module, type);
+                typeDoc.DeclaringType = this;
+
+                NestedTypes.Add(typeDoc);
             }
         }
 
@@ -373,6 +415,14 @@ namespace SpyClass.DataModel.Documentation
             var sb = new StringBuilder();
             var indentation = "".PadLeft(indent, ' ');
 
+            if (Attributes != null)
+            {
+                foreach (var attrib in Attributes.Attributes)
+                {
+                    sb.AppendLine(indentation + "[" + attrib.BuildStringRepresentation() + "]");
+                }
+            }
+
             sb.Append(indentation);
             sb.Append(BuildBasicIdentityString());
             sb.Append(BuildDisplayNameString());
@@ -382,10 +432,22 @@ namespace SpyClass.DataModel.Documentation
                 sb.Append(GenericParameters.BuildGenericParameterListString());
             }
 
-            if (BaseTypeInfo != null)
+            if (BaseTypeInfo != null || ImplementedInterfaces.Any())
             {
                 sb.Append(" : ");
+            }
+
+            if (BaseTypeInfo != null)
+            {
                 sb.Append(BaseTypeInfo.BuildStringRepresentation());
+
+                if (ImplementedInterfaces.Any())
+                    sb.Append(", ");
+            }
+
+            if (ImplementedInterfaces.Any())
+            {
+                sb.Append(string.Join(", ", ImplementedInterfaces.Select(x => x.BuildStringRepresentation())));
             }
 
             if (GenericParameters != null)
@@ -397,24 +459,58 @@ namespace SpyClass.DataModel.Documentation
             sb.AppendLine(indentation + "{");
             sb.Append(BuildInnerContent(indent));
 
-            foreach (var prop in Properties)
+            if (Fields.Any())
             {
-                sb.AppendLine(indentation + "    " + prop.BuildStringRepresentation());
+                sb.AppendLine(indentation + "    " + "/* Fields */");
+                foreach (var field in Fields)
+                {
+                    sb.AppendLine(indentation + "    " + field);
+                }
             }
 
-            foreach (var ev in Events)
+            if (Properties.Any())
             {
-                sb.AppendLine(indentation + "    " + ev.BuildStringRepresentation());
+                sb.AppendLine(indentation + "    " + "/* Properties */");
+                foreach (var prop in Properties)
+                {
+                    sb.AppendLine(indentation + "    " + prop);
+                }
             }
 
-            foreach (var method in Methods)
+            if (Events.Any())
             {
-                sb.AppendLine(indentation + "    " + method.BuildStringRepresentation());
+                sb.AppendLine(indentation + "    " + "/* Events */");
+                foreach (var ev in Events)
+                {
+                    sb.AppendLine(indentation + "    " + ev);
+                }
             }
 
-            foreach (var type in NestedTypes)
+            if (Methods.Any())
             {
-                sb.AppendLine(type.BuildStringRepresentation(4));
+                sb.AppendLine(indentation + "    " + "/* Methods */");
+                foreach (var method in Methods)
+                {
+                    sb.AppendLine(indentation + "    " + method);
+                }
+            }
+
+            if (Constructors.Any())
+            {
+                sb.AppendLine(indentation + "    " + "/* Constructors */");
+                foreach (var constructor in Constructors)
+                {
+                    sb.AppendLine(indentation + "    " + constructor);
+                }
+            }
+
+            if (NestedTypes.Any())
+            {
+                sb.AppendLine(indentation + "    " + "/* Nested types */");
+                foreach (var type in NestedTypes)
+                {
+                    sb.AppendLine(type.BuildStringRepresentation(4));
+                }
             }
 
             sb.Append(indentation + "}");

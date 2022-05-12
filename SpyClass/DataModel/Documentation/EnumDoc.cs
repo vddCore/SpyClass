@@ -9,7 +9,7 @@ namespace SpyClass.DataModel.Documentation
 {
     public sealed class EnumDoc : TypeDoc
     {
-        public List<EnumField> Fields { get; } = new();
+        public new List<EnumField> Fields { get; } = new();
 
         public string UnderlyingTypeFullName { get; private set; }
         public string UnderlyingTypeAlias { get; private set; }

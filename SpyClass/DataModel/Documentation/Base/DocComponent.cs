@@ -10,5 +10,21 @@ namespace SpyClass.DataModel.Documentation.Base
         {
             Module = module;
         }
+
+        protected string StringifyConstant(object constant)
+        {
+            if (constant == null)
+            {
+                return "null";
+            }
+            else if (constant.GetType().FullName == typeof(string).FullName)
+            {
+                return "\"" + constant + "\"";
+            }
+            else
+            {
+                return constant.ToString();
+            }
+        }
     }
 }

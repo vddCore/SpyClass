@@ -11,6 +11,8 @@ namespace SpyClass.DataModel.Documentation.Components
         public bool IsIn { get; private set; }
         public bool IsOut { get; private set; }
 
+        public AttributeList Attributes { get; private set; }
+        
         public List<GenericParameterModifier> Modifiers { get; private set; } = new();
         public List<TypeInfo> Constraints { get; private set; }
 
@@ -23,6 +25,11 @@ namespace SpyClass.DataModel.Documentation.Components
         private void AnalyzeGenericParameter(Mono.Cecil.GenericParameter parameter)
         {
             Name = parameter.Name;
+
+            if (parameter.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(Module, parameter.CustomAttributes);
+            }
 
             if (parameter.HasConstraints)
             {

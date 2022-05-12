@@ -40,6 +40,12 @@ namespace SpyClass.DataModel.Documentation.Components
                 {
                     var param = Parameters[i];
 
+                    if (param.Attributes != null)
+                    {
+                        sb.Append(param.Attributes.BuildStringRepresentation(true));
+                        sb.Append(" ");
+                    }
+                    
                     if (param.IsIn)
                     {
                         sb.Append("in ");

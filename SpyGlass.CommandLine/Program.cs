@@ -14,5 +14,10 @@ namespace SpyGlass.CommandLine
                 Console.WriteLine(doc.ToString());
             }
         }
+
+        public static bool op_Inequality()
+        {
+            return false;
+        }
     }
 }

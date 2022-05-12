@@ -87,7 +87,7 @@ namespace SpyClass.DataModel.Documentation
             return sb.ToString();
         }
         
-        public string BuildStringRepresentation()
+        protected override string BuildStringRepresentation(int indent)
         {
             var sb = new StringBuilder();
 
@@ -99,6 +99,11 @@ namespace SpyClass.DataModel.Documentation
             sb.Append(Name);
 
             return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return BuildStringRepresentation(0);
         }
     }
 }

@@ -10,21 +10,32 @@ namespace SpyClass.DataModel.Documentation
     {
         public TypeDoc Owner { get; }
 
+        public string Name { get; private set; }
         public FieldModifiers Modifiers { get; private set; }
         public TypeInfo FieldTypeInfo { get; private set; }
 
-        public string Name { get; }
+        public string DefaultValueString { get; private set; }
 
         public FieldDoc(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
             : base(module)
         {
             Owner = owner;
-            Access = DetermineAccess(field);
 
+            AnalyzeField(field);
+        }
+
+        private void AnalyzeField(FieldDefinition field)
+        {
+            Access = DetermineAccess(field);
+            Modifiers = DetermineModifiers(field);
+            
+            Name = field.Name;
             FieldTypeInfo = new TypeInfo(Module, field.FieldType);
 
-            Name = field.Name;
-            Modifiers = DetermineModifiers(field);
+            if (field.HasConstant)
+            {
+                DefaultValueString = StringifyConstant(field.Constant);
+            }
         }
 
         public static FieldModifiers DetermineModifiers(FieldDefinition field)
@@ -50,7 +61,7 @@ namespace SpyClass.DataModel.Documentation
             {
                 ret |= FieldModifiers.Static;
             }
-
+            
             return ret;
         }
 
@@ -117,6 +128,12 @@ namespace SpyClass.DataModel.Documentation
             sb.Append(FieldTypeInfo.BuildStringRepresentation());
             sb.Append(" ");
             sb.Append(Name);
+
+            if (DefaultValueString != null)
+            {
+                sb.Append(" = ");
+                sb.Append(DefaultValueString);
+            }
 
             return sb.ToString();
         }

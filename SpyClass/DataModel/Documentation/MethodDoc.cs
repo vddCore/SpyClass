@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using Mono.Cecil;
@@ -14,8 +15,10 @@ namespace SpyClass.DataModel.Documentation
         public MethodModifiers Modifiers { get; }
 
         public string Name { get; private set; }
+        
         public TypeInfo ReturnTypeInfo { get; private set; }
 
+        public AttributeList Attributes { get; private set; }
         public GenericParameterList GenericParameters { get; private set; }
         public MethodParameterList MethodParameters { get; private set; }
 
@@ -37,8 +40,18 @@ namespace SpyClass.DataModel.Documentation
             Name = method.Name;
             ReturnTypeInfo = new TypeInfo(Module, method.ReturnType);
 
+            if (method.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(Module, method.CustomAttributes);
+            }
+
             GenericParameters = new GenericParameterList(Module, method.GenericParameters);
             MethodParameters = new MethodParameterList(Module, method.Parameters);
+
+            if (method.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(ExtensionAttribute).FullName))
+            {
+                MethodParameters.Parameters[0].MarkAsThisParameter();
+            }
 
             IsOverride = method.IsVirtual && !method.IsNewSlot;
         }
@@ -128,10 +141,21 @@ namespace SpyClass.DataModel.Documentation
             return sb.ToString();
         }
 
-        public string BuildStringRepresentation()
+        protected override string BuildStringRepresentation(int indent)
         {
             var sb = new StringBuilder();
+            
+            var indentation = "".PadLeft(indent, ' ');
 
+            if (Attributes != null)
+            {
+                foreach (var attrib in Attributes.Attributes)
+                {
+                    sb.AppendLine(indentation + "[" + attrib.BuildStringRepresentation() + "]");
+                }
+            }
+            
+            sb.Append(indentation);
             sb.Append(AccessModifierString);
             sb.Append(BuildMethodModifierString());
             sb.Append(" ");
@@ -152,6 +176,11 @@ namespace SpyClass.DataModel.Documentation
             }
 
             return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return BuildStringRepresentation(0);
         }
     }
 }

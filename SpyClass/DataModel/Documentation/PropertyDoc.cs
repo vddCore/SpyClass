@@ -10,10 +10,13 @@ namespace SpyClass.DataModel.Documentation
         public string Name { get; private set; }
         public TypeDoc Owner { get; }
 
+        public AttributeList Attributes { get; private set; }
+
         public AccessModifier? GetAccess { get; private set; }
         public AccessModifier? SetAccess { get; private set; }
 
         public TypeInfo PropertyTypeInfo { get; private set; }
+        public string DefaultValueString { get; private set; }
 
         public PropertyDoc(ModuleDefinition module, TypeDoc owner, PropertyDefinition property)
             : base(module)
@@ -24,6 +27,11 @@ namespace SpyClass.DataModel.Documentation
 
         private void AnalyzeProperty(PropertyDefinition property)
         {
+            if (property.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(Module, property.CustomAttributes);
+            }
+            
             AnalyzeGetAccessLevel(property);
             AnalyzeSetAccessLevel(property);
 
@@ -44,6 +52,11 @@ namespace SpyClass.DataModel.Documentation
 
             Name = property.Name;
             PropertyTypeInfo = new TypeInfo(Module, property.PropertyType);
+
+            if (property.HasConstant)
+            {
+                DefaultValueString = StringifyConstant(property.Constant);
+            }
         }
 
         private void AnalyzeGetAccessLevel(PropertyDefinition property)
@@ -108,10 +121,20 @@ namespace SpyClass.DataModel.Documentation
             }
         }
 
-        public string BuildStringRepresentation()
+        protected override string BuildStringRepresentation(int indent)
         {
             var sb = new StringBuilder();
+            var indentation = "".PadLeft(indent, ' ');
 
+            if (Attributes != null)
+            {
+                foreach (var attrib in Attributes.Attributes)
+                {
+                    sb.AppendLine(indentation + "[" + attrib.BuildStringRepresentation() + "]");
+                }
+            }
+            
+            sb.Append(indentation);
             sb.Append(AccessModifierString);
             sb.Append(" ");
             sb.Append(PropertyTypeInfo.BuildStringRepresentation());
@@ -148,7 +171,18 @@ namespace SpyClass.DataModel.Documentation
 
             sb.Append("}");
 
+            if (DefaultValueString != null)
+            {
+                sb.Append(" = ");
+                sb.Append(DefaultValueString);
+            }
+
             return sb.ToString();
+        }
+
+        public override string ToString()
+        {
+            return BuildStringRepresentation(0);
         }
     }
 }

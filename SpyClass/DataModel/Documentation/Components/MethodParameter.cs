@@ -14,6 +14,8 @@ namespace SpyClass.DataModel.Documentation.Components
 
         public string DefaultValueString { get; private set; }
         public ParameterModifiers Modifiers { get; private set; }
+        
+        public AttributeList Attributes { get; private set; }
 
         public MethodParameter(ModuleDefinition module, ParameterDefinition parameter)
             : base(module)
@@ -27,6 +29,11 @@ namespace SpyClass.DataModel.Documentation.Components
             
             TypeFullName = parameter.ParameterType.FullName;
             TypeDisplayName = NameTools.MakeDocFriendlyName(TypeFullName, false);
+            
+            if (parameter.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(Module, parameter.CustomAttributes);
+            }
             
             if (parameter.IsOut)
             {
@@ -43,25 +50,30 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.HasConstant)
             {
-                if (parameter.Constant == null)
-                {
-                    DefaultValueString = "null";
-                }
-                else if (parameter.Constant.GetType().FullName == typeof(string).FullName)
-                {
-                    DefaultValueString = "\"" + parameter.Constant + "\"";
-                }
-                else
-                {
-                    DefaultValueString = parameter.Constant.ToString();
-                }
+                DefaultValueString = StringifyConstant(parameter.Constant);
             }
+        }
+
+        internal void MarkAsThisParameter()
+        {
+            Modifiers |= ParameterModifiers.This;
         }
 
         public string BuildStringRepresentation()
         {
             var sb = new StringBuilder();
 
+            if (Attributes != null && Attributes.Attributes.Any())
+            {
+                sb.Append(Attributes.BuildStringRepresentation(true));
+                sb.Append(" ");
+            }
+
+            if (Modifiers.HasFlag(ParameterModifiers.This))
+            {
+                sb.Append("this ");
+            }
+            
             if (Modifiers.HasFlag(ParameterModifiers.Out))
             {
                 sb.Append("out ");
