@@ -16,8 +16,7 @@ namespace SpyClass.DataModel.Documentation.Components
         public List<GenericParameterModifier> Modifiers { get; private set; } = new();
         public List<TypeInfo> Constraints { get; private set; }
 
-        public GenericParameter(ModuleDefinition module, Mono.Cecil.GenericParameter parameter)
-            : base(module)
+        public GenericParameter(Mono.Cecil.GenericParameter parameter)
         {
             AnalyzeGenericParameter(parameter);
         }
@@ -28,7 +27,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (parameter.HasCustomAttributes)
             {
-                Attributes = new AttributeList(Module, parameter.CustomAttributes);
+                Attributes = new AttributeList(parameter.CustomAttributes);
             }
 
             if (parameter.HasConstraints)
@@ -37,7 +36,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
                 foreach (var constraint in parameter.Constraints)
                 {
-                    Constraints.Add(new TypeInfo(Module, constraint.ConstraintType));
+                    Constraints.Add(new TypeInfo(constraint.ConstraintType));
                 }
             }
             

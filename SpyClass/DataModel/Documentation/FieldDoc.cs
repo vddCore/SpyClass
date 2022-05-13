@@ -10,14 +10,14 @@ namespace SpyClass.DataModel.Documentation
     {
         public TypeDoc Owner { get; }
 
+        public AttributeList Attributes { get; private set; }
         public string Name { get; private set; }
         public FieldModifiers Modifiers { get; private set; }
         public TypeInfo FieldTypeInfo { get; private set; }
 
         public string DefaultValueString { get; private set; }
 
-        public FieldDoc(ModuleDefinition module, FieldDefinition field, TypeDoc owner)
-            : base(module)
+        public FieldDoc(FieldDefinition field, TypeDoc owner)
         {
             Owner = owner;
 
@@ -30,11 +30,16 @@ namespace SpyClass.DataModel.Documentation
             Modifiers = DetermineModifiers(field);
             
             Name = field.Name;
-            FieldTypeInfo = new TypeInfo(Module, field.FieldType);
+            FieldTypeInfo = new TypeInfo(field.FieldType);
 
             if (field.HasConstant)
             {
                 DefaultValueString = StringifyConstant(field.Constant);
+            }
+
+            if (field.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(field.CustomAttributes);
             }
         }
 

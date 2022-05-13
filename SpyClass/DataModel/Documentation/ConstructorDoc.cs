@@ -7,16 +7,15 @@ namespace SpyClass.DataModel.Documentation
 {
     public class ConstructorDoc : DocPart
     {
-        private TypeDoc _owner;
+        public TypeDoc Owner { get; }
 
+        public AttributeList Attributes { get; private set; }
         public MethodModifiers Modifiers { get; private set; }
         public MethodParameterList Parameters { get; private set; }
 
-        public ConstructorDoc(ModuleDefinition module, TypeDoc owner, MethodDefinition constructor) 
-            : base(module)
+        public ConstructorDoc(TypeDoc owner, MethodDefinition constructor)
         {
-            _owner = owner;
-            
+            Owner = owner;
             AnalyzeConstructor(constructor);
         }
 
@@ -24,9 +23,14 @@ namespace SpyClass.DataModel.Documentation
         {
             Access = MethodDoc.DetermineAccess(constructor);
             Modifiers = MethodDoc.DetermineModifiers(constructor);
-            Parameters = new MethodParameterList(Module, constructor.Parameters);
+            Parameters = new MethodParameterList(constructor.Parameters, false);
+
+            if (constructor.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(constructor.CustomAttributes);
+            }
         }
-        
+
         private string BuildConstructorModifierString()
         {
             var sb = new StringBuilder();
@@ -54,12 +58,18 @@ namespace SpyClass.DataModel.Documentation
             var sb = new StringBuilder();
             var indentation = "".PadLeft(indent, ' ');
 
+            if (Attributes != null)
+            {
+                sb.Append(indentation);
+                sb.Append(Attributes.BuildStringRepresentation(false));
+            }
+
             sb.Append(indentation);
             sb.Append(AccessModifierString);
             sb.Append(BuildConstructorModifierString());
             sb.Append(" ");
-            sb.Append(_owner.DisplayName);
-            sb.Append(Parameters.BuildStringRepresentation());
+            sb.Append(Owner.DisplayName);
+            sb.Append(Parameters.BuildStringRepresentation(false));
 
             return sb.ToString();
         }

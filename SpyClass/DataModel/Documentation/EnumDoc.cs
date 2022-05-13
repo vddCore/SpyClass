@@ -3,7 +3,6 @@ using System.Text;
 using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using SpyClass.DataModel.Documentation.Components;
-using SpyClass.Extensions;
 
 namespace SpyClass.DataModel.Documentation
 {
@@ -14,8 +13,8 @@ namespace SpyClass.DataModel.Documentation
         public string UnderlyingTypeFullName { get; private set; }
         public string UnderlyingTypeAlias { get; private set; }
 
-        internal EnumDoc(ModuleDefinition module, TypeDefinition documentedType)
-            : base(module, documentedType, TypeKind.Enum)
+        internal EnumDoc(TypeDefinition documentedType)
+            : base(documentedType, TypeKind.Enum)
         {
             AnalyzeBaseType();
             AnalyzeFields();
@@ -31,19 +30,12 @@ namespace SpyClass.DataModel.Documentation
 
         private void AnalyzeFields()
         {
-            var names = DocumentedType.GetEnumNames();
-            var values = DocumentedType.GetEnumValues();
-            
-            for (var i = 0; i < names.Count; i++)
+            foreach(var field in DocumentedType.Fields)
             {
-                var name = names[i];
-                var value = values[i];
+                if (field.Name == "value__")
+                    continue;
                 
-                // todo field attributes
-                
-                Fields.Add(
-                    new(Module, this, name, value)
-                );
+                Fields.Add(new EnumField(this, field));
             }
         }
 
@@ -67,7 +59,8 @@ namespace SpyClass.DataModel.Documentation
             for (var i = 0; i < Fields.Count; i++)
             {
                 var fld = Fields[i];
-                sb.Append(indentation + $"    {fld.Name} = {fld.Value}");
+
+                sb.Append(fld.BuildStringRepresentation(indent));
 
                 if (i + 1 < Fields.Count)
                     sb.Append(",");

@@ -12,8 +12,8 @@ namespace SpyClass.DataModel.Documentation
             "op_Equality",
         };
 
-        public RecordDoc(ModuleDefinition module, TypeDefinition documentedType) 
-            : base(module, documentedType, TypeKind.Record)
+        public RecordDoc(TypeDefinition documentedType) 
+            : base(documentedType, TypeKind.Record)
         {
         }
     }

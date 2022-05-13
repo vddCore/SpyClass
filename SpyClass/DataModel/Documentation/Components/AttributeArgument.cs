@@ -11,29 +11,27 @@ namespace SpyClass.DataModel.Documentation.Components
         public string Name { get; private set; }
         public string ValueString { get; private set; }
 
-        public AttributeArgument(ModuleDefinition module, CustomAttributeArgument argument) 
-            : base(module)
+        public AttributeArgument(CustomAttributeArgument argument) 
         {
             AnalyzeUnnamedArgument(argument);
         }
 
-        public AttributeArgument(ModuleDefinition module, CustomAttributeNamedArgument argument)
-            : base(module)
+        public AttributeArgument(CustomAttributeNamedArgument argument)
         {
             AnalyzeNamedArgument(argument);
         }
 
         private void AnalyzeUnnamedArgument(CustomAttributeArgument argument)
         {
-            AttributeArgumentTypeInfo = new TypeInfo(Module, argument.Type);
+            AttributeArgumentTypeInfo = new TypeInfo(argument.Type);
             ValueString = StringifyConstant(argument.Value);
         }
 
-        private void AnalyzeNamedArgument(CustomAttributeNamedArgument argument)
+        private void AnalyzeNamedArgument(CustomAttributeNamedArgument namedArgument)
         {
-            AttributeArgumentTypeInfo = new TypeInfo(Module, argument.Argument.Type);
-            Name = argument.Name;
-            ValueString = StringifyConstant(argument.Argument.Value);
+            Name = namedArgument.Name;
+            AttributeArgumentTypeInfo = new TypeInfo(namedArgument.Argument.Type);
+            ValueString = StringifyConstant(namedArgument.Argument.Value);
         }
 
         public string BuildStringRepresentation()

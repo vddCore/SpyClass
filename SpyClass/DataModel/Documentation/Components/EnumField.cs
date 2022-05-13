@@ -1,3 +1,4 @@
+using System.Text;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
 
@@ -7,16 +8,42 @@ namespace SpyClass.DataModel.Documentation.Components
     {
         public EnumDoc Owner { get; }
         
-        public string Name { get; }
-        public string Value { get; }
+        public AttributeList Attributes { get; private set; }
+        public string Name { get; private set; }
+        public string Value { get; private set; }
 
-        public EnumField(ModuleDefinition module, EnumDoc owner, string name, string value)
-            : base(module)
+        public EnumField(EnumDoc owner, FieldDefinition field)
         {
             Owner = owner;
+            AnalyzeField(field);
+        }
+
+        private void AnalyzeField(FieldDefinition field)
+        {
+            if (field.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(field.CustomAttributes);
+            }
+
+            Name = field.Name;
+            Value = field.Constant.ToString();
+        }
+
+        public string BuildStringRepresentation(int indent)
+        {
+            var sb = new StringBuilder();
+            var indentation = "".PadLeft(indent, ' ');
+
+            if (Attributes != null)
+            {
+                foreach (var attr in Attributes.Attributes)
+                {
+                    sb.AppendLine(indentation + "    [" + attr.BuildStringRepresentation() + "]");
+                }
+            }
             
-            Name = name;
-            Value = value;
+            sb.Append(indentation + $"    {Name} = {Value}");
+            return sb.ToString();
         }
     }
 }

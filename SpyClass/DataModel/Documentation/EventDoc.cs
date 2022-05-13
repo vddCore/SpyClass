@@ -15,8 +15,7 @@ namespace SpyClass.DataModel.Documentation
 
         public EventModifiers Modifiers { get; private set; }
 
-        public EventDoc(ModuleDefinition module, TypeDoc owner, EventDefinition ev) 
-            : base(module)
+        public EventDoc(TypeDoc owner, EventDefinition ev) 
         {
             Owner = owner;
             
@@ -27,7 +26,7 @@ namespace SpyClass.DataModel.Documentation
         {
             Name = ev.Name;
 
-            EventTypeInfo = new TypeInfo(Module, ev.EventType);
+            EventTypeInfo = new TypeInfo(ev.EventType);
             
             Access = DetermineAccess(ev);
             Modifiers = DetermineModifiers(ev);

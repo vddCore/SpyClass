@@ -1,5 +1,4 @@
 using System.IO;
-using Mono.Cecil;
 
 namespace SpyClass.DataModel.Documentation.Base
 {
@@ -8,11 +7,6 @@ namespace SpyClass.DataModel.Documentation.Base
         public AccessModifier Access { get; protected set; }
 
         public string AccessModifierString => BuildAccessLevelString(Access);
-
-        protected DocPart(ModuleDefinition module)
-            : base(module)
-        {
-        }
 
         public static string BuildAccessLevelString(AccessModifier accessModifier)
         {

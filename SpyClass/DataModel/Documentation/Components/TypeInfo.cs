@@ -11,8 +11,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
         public GenericArgumentList GenericArguments { get; private set; }
 
-        public TypeInfo(ModuleDefinition module, TypeReference typeReference) 
-            : base(module)
+        public TypeInfo(TypeReference typeReference) 
         {
             AnalyzeTypeReference(typeReference);
         }
@@ -24,7 +23,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
             if (typeReference.IsGenericInstance)
             {
-                GenericArguments = new GenericArgumentList(Module, typeReference as GenericInstanceType);
+                GenericArguments = new GenericArgumentList(typeReference as GenericInstanceType);
             }
         }
 

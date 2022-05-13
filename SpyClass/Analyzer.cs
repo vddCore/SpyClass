@@ -39,7 +39,7 @@ namespace SpyClass
                 if (!type.IsPublic && !options.IncludeNonPublicTypes)
                     continue;
 
-                ret.Add(TypeDoc.FromType(module, type));
+                ret.Add(TypeDoc.FromType(type));
             }
             
             return ret;

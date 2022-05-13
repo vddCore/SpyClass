@@ -4,8 +4,8 @@ namespace SpyClass.DataModel.Documentation
 {
     public sealed class ClassDoc : TypeDoc
     {
-        public ClassDoc(ModuleDefinition module, TypeDefinition documentedType) 
-            : base(module, documentedType, TypeKind.Class)
+        public ClassDoc(TypeDefinition documentedType) 
+            : base(documentedType, TypeKind.Class)
         {
         }
     }

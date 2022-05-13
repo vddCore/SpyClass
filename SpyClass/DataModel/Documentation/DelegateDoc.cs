@@ -12,8 +12,8 @@ namespace SpyClass.DataModel.Documentation
         
         public MethodParameterList MethodParameters { get; private set; }
 
-        public DelegateDoc(ModuleDefinition module, TypeDefinition documentedType) 
-            : base(module, documentedType, TypeKind.Delegate)
+        public DelegateDoc(TypeDefinition documentedType) 
+            : base(documentedType, TypeKind.Delegate)
         {
             AnalyzeDelegate();
         }
@@ -24,7 +24,7 @@ namespace SpyClass.DataModel.Documentation
 
             ReturnTypeFullName = invokeMethod.ReturnType.FullName;
             ReturnTypeDisplayName = NameTools.MakeDocFriendlyName(ReturnTypeFullName, false);
-            MethodParameters = new MethodParameterList(Module, invokeMethod.Parameters);
+            MethodParameters = new MethodParameterList(invokeMethod.Parameters, false);
         }
 
         protected override string BuildStringRepresentation(int indent)
@@ -44,7 +44,7 @@ namespace SpyClass.DataModel.Documentation
                 sb.Append(GenericParameters.BuildGenericParameterListString());
             }
             
-            sb.Append(MethodParameters.BuildStringRepresentation());
+            sb.Append(MethodParameters.BuildStringRepresentation(false));
 
             if (GenericParameters != null)
             {

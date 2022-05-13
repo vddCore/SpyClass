@@ -14,29 +14,28 @@ namespace SpyClass.DataModel.Documentation
         public List<AttributeArgument> ConstructorArguments { get; private set; } = new();
         public List<AttributeArgument> NamedArguments { get; private set; } = new();
 
-        public AttributeComponent(ModuleDefinition module, CustomAttribute customAttribute)
-            : base(module)
+        public AttributeComponent(CustomAttribute customAttribute)
         {
             AnalyzeCustomAttribute(customAttribute);
         }
 
         private void AnalyzeCustomAttribute(CustomAttribute customAttribute)
         {
-            AttributeTypeInfo = new TypeInfo(Module, customAttribute.AttributeType);
+            AttributeTypeInfo = new TypeInfo(customAttribute.AttributeType);
             
             foreach (var constructorArgument in customAttribute.ConstructorArguments)
             {
-                ConstructorArguments.Add(new AttributeArgument(Module, constructorArgument));
+                ConstructorArguments.Add(new AttributeArgument(constructorArgument));
             }
 
             foreach (var fieldArgument in customAttribute.Fields)
             {
-                NamedArguments.Add(new AttributeArgument(Module, fieldArgument));
+                NamedArguments.Add(new AttributeArgument(fieldArgument));
             }
 
             foreach (var propertyArgument in customAttribute.Properties)
             {
-                NamedArguments.Add(new AttributeArgument(Module, propertyArgument));
+                NamedArguments.Add(new AttributeArgument(propertyArgument));
             }
         }
 

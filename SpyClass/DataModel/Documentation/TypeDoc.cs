@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using Mono.Cecil;
@@ -8,12 +9,16 @@ using Mono.Cecil.Rocks;
 using SpyClass.DataModel.Documentation.Base;
 using SpyClass.DataModel.Documentation.Components;
 using SpyClass.Extensions;
+using TypeInfo = SpyClass.DataModel.Documentation.Components.TypeInfo;
 
 namespace SpyClass.DataModel.Documentation
 {
     public abstract class TypeDoc : DocPart
     {
         private static Dictionary<string, TypeDoc> _cache = new();
+
+        private CustomAttribute _defaultMemberAttribute;
+        private string _defaultMemberName;
 
         protected TypeDefinition DocumentedType { get; }
 
@@ -35,14 +40,14 @@ namespace SpyClass.DataModel.Documentation
         public List<TypeInfo> ImplementedInterfaces { get; private set; } = new();
 
         public List<FieldDoc> Fields { get; } = new();
-        public List<PropertyDoc> Properties { get; private set; } = new();
-        public List<EventDoc> Events { get; private set; } = new();
-        public List<ConstructorDoc> Constructors { get; private set; } = new();
-        public List<MethodDoc> Methods { get; private set; } = new();
-        public List<TypeDoc> NestedTypes { get; private set; } = new();
+        public List<EventDoc> Events { get; } = new();
+        public List<IndexerDoc> Indexers { get; } = new();
+        public List<PropertyDoc> Properties { get; } = new();
+        public List<ConstructorDoc> Constructors { get; } = new();
+        public List<MethodDoc> Methods { get; } = new();
+        public List<TypeDoc> NestedTypes { get; } = new();
 
-        protected TypeDoc(ModuleDefinition module, TypeDefinition documentedType, TypeKind kind)
-            : base(module)
+        protected TypeDoc(TypeDefinition documentedType, TypeKind kind)
         {
             DocumentedType = documentedType;
             Kind = kind;
@@ -55,6 +60,12 @@ namespace SpyClass.DataModel.Documentation
             }
 
             AnalyzeEvents();
+
+            if (_defaultMemberName == "Item")
+            {
+                AnalyzeIndexers();
+            }
+
             AnalyzeProperties();
             AnalyzeMethods();
             AnalyzeNestedTypes();
@@ -70,28 +81,44 @@ namespace SpyClass.DataModel.Documentation
             FullName = DocumentedType.FullName;
             DisplayName = NameTools.RemoveClrTypeCharacters(FullName, true);
 
+            if (DocumentedType.HasCustomAttributes)
+            {
+                Attributes = new AttributeList(DocumentedType.CustomAttributes);
+            }
+            
+            var indexerCriterion = DocumentedType.CustomAttributes.FirstOrDefault(x =>
+                x.AttributeType.FullName == typeof(DefaultMemberAttribute).FullName);
+
+            if (indexerCriterion != null)
+            {
+                var itemPropertyName = indexerCriterion.ConstructorArguments[0].Value.ToString();
+
+                if (itemPropertyName == "Item")
+                {
+                    Attributes.Attributes.RemoveAll(x =>
+                        x.AttributeTypeInfo.FullName == typeof(DefaultMemberAttribute).FullName);
+                    
+                    _defaultMemberName = itemPropertyName;
+                    _defaultMemberAttribute = indexerCriterion;
+                }
+            }
+
             if (DocumentedType.BaseType != null && !IsBuiltInBaseType(DocumentedType.BaseType.FullName))
             {
-                BaseTypeInfo = new TypeInfo(Module, DocumentedType.BaseType);
+                BaseTypeInfo = new TypeInfo(DocumentedType.BaseType);
             }
 
             if (DocumentedType.HasInterfaces)
             {
                 foreach (var iface in DocumentedType.Interfaces)
                 {
-                    ImplementedInterfaces.Add(new TypeInfo(Module, iface.InterfaceType));
+                    ImplementedInterfaces.Add(new TypeInfo(iface.InterfaceType));
                 }
-            }
-
-            if (DocumentedType.HasCustomAttributes)
-            {
-                Attributes = new AttributeList(Module, DocumentedType.CustomAttributes);
             }
 
             if (DocumentedType.HasGenericParameters)
             {
                 GenericParameters = new GenericParameterList(
-                    Module,
                     DocumentedType.GenericParameters
                 );
             }
@@ -107,7 +134,7 @@ namespace SpyClass.DataModel.Documentation
                 if (field.IsCompilerControlled && Analyzer.Options.IgnoreCompilerGeneratedTypes)
                     continue;
 
-                Fields.Add(new FieldDoc(Module, field, this));
+                Fields.Add(new FieldDoc(field, this));
             }
         }
 
@@ -115,7 +142,36 @@ namespace SpyClass.DataModel.Documentation
         {
             foreach (var ev in DocumentedType.Events)
             {
-                Events.Add(new EventDoc(Module, this, ev));
+                Events.Add(new EventDoc(this, ev));
+            }
+        }
+
+        private void AnalyzeIndexers()
+        {
+            if (_defaultMemberName == null)
+                return;
+
+            foreach (var prop in DocumentedType.Properties)
+            {
+                if (prop.CustomAttributes.Any(x =>
+                        x.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
+                    && Analyzer.Options.IgnoreCompilerGeneratedTypes)
+                    continue;
+
+                if (_defaultMemberName == null)
+                    continue;
+
+                if (prop.Name != _defaultMemberName)
+                    continue;
+
+                var propDoc = new IndexerDoc(this, prop);
+
+                if (propDoc.Access == AccessModifier.Public
+                    || propDoc.Access == AccessModifier.Protected
+                    || Analyzer.Options.IncludeNonUserMembers)
+                {
+                    Indexers.Add(propDoc);
+                }
             }
         }
 
@@ -123,11 +179,15 @@ namespace SpyClass.DataModel.Documentation
         {
             foreach (var prop in DocumentedType.Properties)
             {
-                if (prop.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
+                if (prop.CustomAttributes.Any(x =>
+                        x.AttributeType.FullName == typeof(CompilerGeneratedAttribute).FullName)
                     && Analyzer.Options.IgnoreCompilerGeneratedTypes)
                     continue;
-                
-                var propDoc = new PropertyDoc(Module, this, prop);
+
+                if (_defaultMemberName != null && prop.Name == _defaultMemberName)
+                    continue;
+
+                var propDoc = new PropertyDoc(this, prop);
 
                 if (propDoc.Access == AccessModifier.Public
                     || propDoc.Access == AccessModifier.Protected
@@ -156,11 +216,11 @@ namespace SpyClass.DataModel.Documentation
 
                 if (method.IsConstructor)
                 {
-                    Constructors.Add(new ConstructorDoc(Module, this, method));
+                    Constructors.Add(new ConstructorDoc(this, method));
                 }
                 else
                 {
-                    Methods.Add(new MethodDoc(Module, this, method));
+                    Methods.Add(new MethodDoc(this, method));
                 }
             }
         }
@@ -178,7 +238,7 @@ namespace SpyClass.DataModel.Documentation
                 if (!type.IsNestedPublic && !type.IsNestedFamily && !Analyzer.Options.IncludeNonPublicTypes)
                     continue;
 
-                var typeDoc = FromType(Module, type);
+                var typeDoc = FromType(type);
                 typeDoc.DeclaringType = this;
 
                 NestedTypes.Add(typeDoc);
@@ -192,7 +252,7 @@ namespace SpyClass.DataModel.Documentation
                    || fullName == typeof(Enum).FullName;
         }
 
-        public static TypeDoc FromType(ModuleDefinition module, TypeDefinition type)
+        public static TypeDoc FromType(TypeDefinition type)
         {
             if (_cache.ContainsKey(type.FullName!))
                 return _cache[type.FullName];
@@ -203,27 +263,27 @@ namespace SpyClass.DataModel.Documentation
             switch (typeKind)
             {
                 case TypeKind.Enum:
-                    ret = new EnumDoc(module, type);
+                    ret = new EnumDoc(type);
                     break;
 
                 case TypeKind.Class:
-                    ret = new ClassDoc(module, type);
+                    ret = new ClassDoc(type);
                     break;
 
                 case TypeKind.Delegate:
-                    ret = new DelegateDoc(module, type);
+                    ret = new DelegateDoc(type);
                     break;
 
                 case TypeKind.Struct:
-                    ret = new StructDoc(module, type);
+                    ret = new StructDoc(type);
                     break;
 
                 case TypeKind.Record:
-                    ret = new RecordDoc(module, type);
+                    ret = new RecordDoc(type);
                     break;
 
                 case TypeKind.Interface:
-                    ret = new InterfaceDoc(module, type);
+                    ret = new InterfaceDoc(type);
                     break;
 
                 default:
@@ -365,6 +425,11 @@ namespace SpyClass.DataModel.Documentation
                     break;
             }
 
+            if (Kind == TypeKind.Struct && ((StructDoc)this).IsReadOnly)
+            {
+                sb.Append(" readonly");
+            }
+
             switch (Kind)
             {
                 case TypeKind.Enum:
@@ -467,6 +532,24 @@ namespace SpyClass.DataModel.Documentation
                     sb.AppendLine(indentation + "    " + field);
                 }
             }
+            
+            if (Events.Any())
+            {
+                sb.AppendLine(indentation + "    " + "/* Events */");
+                foreach (var ev in Events)
+                {
+                    sb.AppendLine(indentation + "    " + ev);
+                }
+            }
+
+            if (Indexers.Any())
+            {
+                sb.AppendLine(indentation + "    " + "/* Indexers */");
+                foreach (var indexer in Indexers)
+                {
+                    sb.AppendLine(indentation + "    " + indexer);
+                }
+            }
 
             if (Properties.Any())
             {
@@ -474,15 +557,6 @@ namespace SpyClass.DataModel.Documentation
                 foreach (var prop in Properties)
                 {
                     sb.AppendLine(indentation + "    " + prop);
-                }
-            }
-
-            if (Events.Any())
-            {
-                sb.AppendLine(indentation + "    " + "/* Events */");
-                foreach (var ev in Events)
-                {
-                    sb.AppendLine(indentation + "    " + ev);
                 }
             }
 

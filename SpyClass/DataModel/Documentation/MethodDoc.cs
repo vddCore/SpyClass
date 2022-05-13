@@ -24,8 +24,7 @@ namespace SpyClass.DataModel.Documentation
 
         public bool IsOverride { get; private set; }
 
-        public MethodDoc(ModuleDefinition module, TypeDoc owner, MethodDefinition method)
-            : base(module)
+        public MethodDoc(TypeDoc owner, MethodDefinition method)
         {
             Owner = owner;
 
@@ -38,15 +37,15 @@ namespace SpyClass.DataModel.Documentation
         private void AnalyzeMethod(MethodDefinition method)
         {
             Name = method.Name;
-            ReturnTypeInfo = new TypeInfo(Module, method.ReturnType);
+            ReturnTypeInfo = new TypeInfo(method.ReturnType);
 
             if (method.HasCustomAttributes)
             {
-                Attributes = new AttributeList(Module, method.CustomAttributes);
+                Attributes = new AttributeList(method.CustomAttributes);
             }
 
-            GenericParameters = new GenericParameterList(Module, method.GenericParameters);
-            MethodParameters = new MethodParameterList(Module, method.Parameters);
+            GenericParameters = new GenericParameterList(method.GenericParameters);
+            MethodParameters = new MethodParameterList(method.Parameters, true);
 
             if (method.CustomAttributes.Any(x => x.AttributeType.FullName == typeof(ExtensionAttribute).FullName))
             {
@@ -168,7 +167,7 @@ namespace SpyClass.DataModel.Documentation
                 sb.Append(GenericParameters.BuildGenericParameterListString());
             }
 
-            sb.Append(MethodParameters.BuildStringRepresentation());
+            sb.Append(MethodParameters.BuildStringRepresentation(false));
 
             if (GenericParameters != null)
             {

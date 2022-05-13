@@ -14,13 +14,13 @@ namespace SpyClass.DataModel.Documentation.Components
             "System.Runtime.CompilerServices.NullableAttribute",
             "System.Runtime.CompilerServices.IsUnmanagedAttribute",
             "System.Runtime.CompilerServices.CompilerGeneratedAttribute",
-            "System.Runtime.CompilerServices.ExtensionAttribute"
+            "System.Runtime.CompilerServices.ExtensionAttribute",
+            "System.Runtime.CompilerServices.IsReadOnlyAttribute"
         };
             
         public List<AttributeComponent> Attributes { get; private set; } = new();
 
-        public AttributeList(ModuleDefinition module, Mono.Collections.Generic.Collection<CustomAttribute> attributes) 
-            : base(module)
+        public AttributeList(Mono.Collections.Generic.Collection<CustomAttribute> attributes) 
         {
             AnalyzeAttributes(attributes);
         }
@@ -32,7 +32,7 @@ namespace SpyClass.DataModel.Documentation.Components
                 if (IgnoredAttributeTypes.Contains(attribute.AttributeType.FullName))
                     continue;
                 
-                Attributes.Add(new AttributeComponent(Module, attribute));
+                Attributes.Add(new AttributeComponent(attribute));
             }
         }
 

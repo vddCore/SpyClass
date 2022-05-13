@@ -12,8 +12,7 @@ namespace SpyClass.DataModel.Documentation.Components
 
         public List<TypeInfo> Arguments { get; } = new();
 
-        public GenericArgumentList(ModuleDefinition module, GenericInstanceType genericInstanceType) 
-            : base(module)
+        public GenericArgumentList(GenericInstanceType genericInstanceType) 
         {
             AnalyzeGenericArguments(genericInstanceType);
         }
@@ -24,7 +23,7 @@ namespace SpyClass.DataModel.Documentation.Components
             {
                 foreach (var genericArgument in genericInstanceType.GenericArguments)
                 {
-                    Arguments.Add(new TypeInfo(Module, genericArgument));
+                    Arguments.Add(new TypeInfo(genericArgument));
                 }
             }
         }

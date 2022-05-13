@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using Mono.Cecil;
 using Mono.Collections.Generic;
 using SpyClass.DataModel.Documentation.Base;
 
@@ -14,8 +13,7 @@ namespace SpyClass.DataModel.Documentation.Components
         
         public List<GenericParameter> Parameters { get; } = new();
 
-        public GenericParameterList(ModuleDefinition module, Collection<Mono.Cecil.GenericParameter> cecilParameters)
-            : base(module)
+        public GenericParameterList(Collection<Mono.Cecil.GenericParameter> cecilParameters)
         {
             AnalyzeParameters(cecilParameters);
         }
@@ -24,7 +22,7 @@ namespace SpyClass.DataModel.Documentation.Components
         {
             foreach (var parameter in cecilParameters)
             {
-                Parameters.Add(new GenericParameter(Module, parameter));
+                Parameters.Add(new GenericParameter(parameter));
             }
         }
 

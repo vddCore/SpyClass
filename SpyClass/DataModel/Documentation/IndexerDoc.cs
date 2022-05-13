@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text;
 using Mono.Cecil;
 using SpyClass.DataModel.Documentation.Base;
@@ -6,35 +5,35 @@ using SpyClass.DataModel.Documentation.Components;
 
 namespace SpyClass.DataModel.Documentation
 {
-    public class PropertyDoc : DocPart
+    public class IndexerDoc : DocPart
     {
-        public string Name { get; private set; }
         public TypeDoc Owner { get; }
 
         public AttributeList Attributes { get; private set; }
 
         public AttributeList GetAttributes { get; private set; }
         public AccessModifier? GetAccess { get; private set; }
-
+        
         public AttributeList SetAttributes { get; private set; }
         public AccessModifier? SetAccess { get; private set; }
+        
+        public MethodParameterList Parameters { get; private set; }
 
-        public TypeInfo PropertyTypeInfo { get; private set; }
-        public string DefaultValueString { get; private set; }
+        public TypeInfo IndexerTypeInfo { get; private set; }
 
-        public PropertyDoc(TypeDoc owner, PropertyDefinition property)
+        public IndexerDoc(TypeDoc owner, PropertyDefinition property)
         {
             Owner = owner;
-            AnalyzeProperty(property);
+            AnalyzeIndexer(property);
         }
 
-        private void AnalyzeProperty(PropertyDefinition property)
+        private void AnalyzeIndexer(PropertyDefinition property)
         {
             if (property.HasCustomAttributes)
             {
                 Attributes = new AttributeList(property.CustomAttributes);
             }
-
+            
             if (property.GetMethod != null && property.GetMethod.HasCustomAttributes)
             {
                 GetAttributes = new AttributeList(property.GetMethod.CustomAttributes);
@@ -44,7 +43,7 @@ namespace SpyClass.DataModel.Documentation
             {
                 SetAttributes = new AttributeList(property.SetMethod.CustomAttributes);
             }
-
+            
             AnalyzeGetAccessLevel(property);
             AnalyzeSetAccessLevel(property);
 
@@ -63,12 +62,15 @@ namespace SpyClass.DataModel.Documentation
                     : SetAccess.Value;
             }
 
-            Name = property.Name;
-            PropertyTypeInfo = new TypeInfo(property.PropertyType);
+            IndexerTypeInfo = new TypeInfo(property.PropertyType);
 
-            if (property.HasConstant)
+            if (property.GetMethod != null)
             {
-                DefaultValueString = StringifyConstant(property.Constant);
+                Parameters = new MethodParameterList(property.GetMethod.Parameters, false);
+            }
+            else if (property.SetMethod != null)
+            {
+                Parameters = new MethodParameterList(property.SetMethod.Parameters, true);
             }
         }
 
@@ -76,7 +78,7 @@ namespace SpyClass.DataModel.Documentation
         {
             if (property.GetMethod == null)
                 return;
-
+            
             if (property.GetMethod.IsPublic)
             {
                 GetAccess = AccessModifier.Public;
@@ -107,7 +109,7 @@ namespace SpyClass.DataModel.Documentation
         {
             if (property.SetMethod == null)
                 return;
-
+            
             if (property.SetMethod.IsPublic)
             {
                 SetAccess = AccessModifier.Public;
@@ -146,13 +148,15 @@ namespace SpyClass.DataModel.Documentation
                     sb.AppendLine(indentation + "[" + attrib.BuildStringRepresentation() + "]");
                 }
             }
-
+            
             sb.Append(indentation);
             sb.Append(AccessModifierString);
             sb.Append(" ");
-            sb.Append(PropertyTypeInfo.BuildStringRepresentation());
-            sb.Append(" ");
-            sb.Append(Name);
+            sb.Append(IndexerTypeInfo.BuildStringRepresentation());
+            sb.Append(" this");
+            sb.Append("[");
+            sb.Append(Parameters.BuildStringRepresentation(true));
+            sb.Append("]");
 
             sb.Append(" { ");
 
@@ -160,52 +164,41 @@ namespace SpyClass.DataModel.Documentation
                 && ((GetAccess.Value == AccessModifier.Public || GetAccess.Value == AccessModifier.Protected)
                     || Analyzer.Options.IncludeNonPublicTypes))
             {
-                if (GetAttributes != null && GetAttributes.Attributes.Any())
+                if (GetAttributes != null)
                 {
                     sb.Append(GetAttributes.BuildStringRepresentation(true));
                     sb.Append(" ");
                 }
-
+                
                 if ((int)GetAccess > (int)Access)
                 {
                     sb.Append(BuildAccessLevelString(GetAccess.Value));
                     sb.Append(" ");
                 }
-
+                
                 sb.Append("get; ");
             }
-
+            
             if (SetAccess != null
                 && ((SetAccess.Value == AccessModifier.Public || SetAccess.Value == AccessModifier.Protected)
                     || Analyzer.Options.IncludeNonPublicTypes))
             {
-                if (SetAttributes != null && SetAttributes.Attributes.Any())
+                if (SetAttributes != null)
                 {
                     sb.Append(SetAttributes.BuildStringRepresentation(true));
                     sb.Append(" ");
                 }
-
+                
                 if ((int)SetAccess > (int)Access)
                 {
                     sb.Append(BuildAccessLevelString(SetAccess.Value));
                     sb.Append(" ");
                 }
-
+                
                 sb.Append("set; ");
             }
 
-            if (
-                (GetAttributes != null && GetAttributes.Attributes.Any())
-                || (SetAttributes != null && SetAttributes.Attributes.Any()))
-                sb.AppendLine();
-
             sb.Append("}");
-
-            if (DefaultValueString != null)
-            {
-                sb.Append(" = ");
-                sb.Append(DefaultValueString);
-            }
 
             return sb.ToString();
         }

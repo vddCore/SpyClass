@@ -17,8 +17,7 @@ namespace SpyClass.DataModel.Documentation.Components
         
         public AttributeList Attributes { get; private set; }
 
-        public MethodParameter(ModuleDefinition module, ParameterDefinition parameter)
-            : base(module)
+        public MethodParameter(ParameterDefinition parameter)
         {
             AnalyzeParameter(parameter);
         }
@@ -32,7 +31,7 @@ namespace SpyClass.DataModel.Documentation.Components
             
             if (parameter.HasCustomAttributes)
             {
-                Attributes = new AttributeList(Module, parameter.CustomAttributes);
+                Attributes = new AttributeList(parameter.CustomAttributes);
             }
             
             if (parameter.IsOut)
