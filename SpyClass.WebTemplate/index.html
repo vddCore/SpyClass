@@ -1,38 +1,97 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>SpyClass API reference template</title>
-        <link rel="stylesheet" href="style.css" />
-    </head>
+<head>
+  <title>SpyClass API reference template</title>
+  <link rel="stylesheet" href="css/style-index.css" />
+  <script src="js/TreeLinks.js"></script>
+  <script src="js/TreeItemLinks.js"></script>
+</head>
 
-    <body>
-        <div class="wrapper">
-            <nav>
-                <div id="logo"></div>
-                <div id="header-title">
-                    SpyClass API reference template
-                </div>
-            </nav>
-
-            <div id="main">
-                <div id="left-col">
-
-                </div>
-                <div id="right-col">
-                    <div class="wrapper">
-                        <div id="content">
-
-                        </div>
-                    </div>
-
-
-                    <footer>
-                        <div id="footer-content">
-                            Copyright (? lol) &copy; 2022 SpyClass Project | Layout shamelessly stolen from Wiki.js
-                        </div>
-                    </footer>
-                </div>
-            </div>
+<body>
+  <div class="wrapper">
+    <nav>
+      <div id="logo"></div>
+      <div id="header">
+        <div id="current-document">
+          Main Page
         </div>
-    </body>
+        
+        <div id="project-title">
+          SpyClass API reference template
+        </div>
+      </div>
+    </nav>
+    
+    <div id="main">
+      <div id="left-col">
+        <ul role="tree" aria-labelledby="apitree-root">
+          <li role="treeitem" 
+              aria-level="1" 
+              aria-expanded="false"
+              tabindex="0">
+            <span>Chroma</span>
+            <ul role="group">
+              <li role="treeitem" 
+                  aria-level="2"
+                  aria-expanded="false">
+                <span>Audio</span>
+                <ul role="group">
+                  <li role="treeitem"><span>AudioSource.cs</span></li>
+                </ul>
+              </li>
+
+              <li role="treeitem" 
+                  aria-level="2"
+                  aria-expanded="false">
+                <span>Input</span>
+                <ul role="group">
+                  <li role="treeitem"><span>Keyboard.cs</span></li>
+                  <li role="treeitem"><span>Mouse.cs</span></li>
+                  <li role="treeitem"><span>Controller.cs</span></li>
+                </ul>
+              </li>
+
+              <li role="treeitem" 
+                  aria-level="2"
+                  aria-expanded="false">
+                <span>Graphics</span>
+                <ul role="group">
+                  <li role="treeitem"
+                      aria-level="3"
+                      aria-expanded="false">
+                    <span>Accelerated</span>
+                    <ul role="group">
+                      <li role="treeitem"><span>Shader.cs</span></li>
+                      <li role="treeitem"><span>Effect.cs</span></li>
+                      <li role="treeitem"><span>PixelShader.cs</span></li>
+                      <li role="treeitem"><span>VertexShader.cs</span></li>
+                    </ul>
+                  </li>
+                  <li role="treeitem"><span>RenderContext.cs</span></li>
+                  <li role="treeitem"><span>RenderSettings.cs</span></li>
+                  <li role="treeitem"><span>RenderTransform.cs</span></li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+      
+      <div id="right-col">
+        <div class="wrapper">
+          <div id="content">
+            
+          </div>
+        </div>
+        
+        
+        <footer>
+          <div id="footer-content">
+            Copyright (? lol) &copy; 2022 SpyClass Project | Layout shamelessly stolen from Wiki.js
+          </div>
+        </footer>
+      </div>
+    </div>
+  </div>
+</body>
 </html>
