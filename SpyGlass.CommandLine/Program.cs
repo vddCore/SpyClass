@@ -1,5 +1,9 @@
 ﻿using System;
-using SpyClass;
+using System.Text;
+using SpyClass.Analysis;
+using SpyClass.Hierarchization;
+using SpyClass.Rendering;
+using SpyClass.Rendering.HtmlRendering;
 
 namespace SpyGlass.CommandLine
 {
@@ -9,15 +13,11 @@ namespace SpyGlass.CommandLine
         {
             var docs = Analyzer.Analyze("/codespace/code/chroma/Chroma/Chroma/bin/Release/net6.0/Chroma.dll");
 
-            foreach (var doc in docs)
-            {
-                Console.WriteLine(doc.ToString());
-            }
-        }
-
-        public static bool op_Inequality()
-        {
-            return false;
+            var dtb = new DocTreeBuilder(docs);
+            var node = dtb.Build();
+            var renderer = new HtmlRenderer("docs");
+            
+            renderer.Render(node);
         }
     }
 }

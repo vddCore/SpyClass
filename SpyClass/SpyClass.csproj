@@ -5,7 +5,36 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="HtmlAgilityPack" Version="1.11.42" />
       <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Update="SpyClass.WebTemplate\css\style-content.css">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\css\style-index.css">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\js\jquery-3.6.0.min.js">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\js\navigation.js">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\js\TreeItemLinks.js">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\js\TreeLinks.js">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="SpyClass.WebTemplate\index.html">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="SpyClass.WebTemplate\docs" />
     </ItemGroup>
 
 </Project>

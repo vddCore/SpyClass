@@ -1,0 +1,154 @@
+html, body 
+{
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+nav 
+{
+    height: 24px;
+    padding: 15px 15px;
+    color: white;
+    background-color: black;
+    font-size: 18px;
+}
+
+#current-document
+{
+    float: left;
+}
+
+#project-title
+{
+    float: right;
+}
+
+.wrapper
+{
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#main
+{
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+#left-col
+{
+    width: 300px;
+    color: white;
+    background-color: #1976D2;
+    overflow: hidden;
+}
+
+#right-col
+{
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+#main-doc-content
+{
+    padding: 0px 16px;
+    flex-grow: 1;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+footer
+{
+    display: flex;
+    flex-direction: row;
+}
+
+#footer-content
+{
+    color: #949494;
+    padding: 4px;
+    font-size: 12px;
+    height: 20px;
+    background-color: #EEEEEE;
+    text-align: center;
+    flex-grow: 1;
+}
+
+ul[role="tree"]
+{
+    user-select: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+ul[role="tree"] li
+{
+    user-select: none;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+ul[role="tree"] a
+{
+    text-decoration: dotted;
+    border-color: transparent;
+}
+
+[role="treeitem"][aria-expanded="false"] > ul
+{
+    display: none;
+}
+
+[role="treeitem"][aria-expanded="true"] > ul
+{
+    display: block;
+}
+
+[role="treeitem"],
+[role="treeitem"] span
+{
+    width: 100%;
+    margin: 0;
+    border: none;
+    padding: 5px 0px 5px 5px;
+    display: block;
+}
+
+[role="treeitem"]:focus
+{
+    outline: 0;
+}
+
+[role="treeitem"].focus,
+[role="treeitem"] span.focus
+{
+    background-color: #4499EC;
+}
+
+[role="treeitem"].hover,
+[role="treeitem"] span.hover
+{
+    background-color: #4499EC;
+}
+
+[role="treeitem"][aria-expanded="false"] > span::before
+{
+    content: "[+] ";
+    font-family: monospace;
+}
+
+[role="treeitem"][aria-expanded="true"] > span::before
+{
+    content: "[-] ";
+    font-family: monospace;
+}
+
+ul[role="group"]
+{
+    padding: 0 0 0 10px;
+}
